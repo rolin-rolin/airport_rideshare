@@ -34,6 +34,14 @@ Two tabs: To Airport and From Airport.
 
 To post a trip, the poster selects a **vehicle type** (UberX, UberXL, etc.) from a fixed reference list. The vehicle type determines the trip's seat capacity and large-bag capacity — these aren't just a recommendation, they're the cap enforced on that post (see 4.3).
 
+Two separate soft/hard caps per tier, backpacks free: a passenger cap (hard, tied to seatbelts) and a suitcase/checked-bag cap (soft, trunk-based). Backpacks and personal items don't count toward either cap — assumed to travel on laps/at feet, not in the trunk.
+
+| Tier | Passenger cap | Suitcase cap (checked bags) | Notes |
+|---|---|---|---|
+| Standard (UberX / Lyft) | 4 | 2 | Tight trunk; fine for backpack-only trips |
+| XL (UberXL / Lyft XL) | 6 | 4–5 | Does not guarantee trunk space on either platform |
+| XXL (UberXXL / Lyft XXL) | 6 | 6+ | Guaranteed trunk space; airport-only on Uber, select regions only on Lyft — availability should be checked per airport |
+
 Each trip post includes:
 
 - Flight date/time
@@ -131,7 +139,7 @@ Why web over native mobile for MVP:
 
 ## 9. Open Questions / Next Steps
 
-- Finalize the vehicle type reference table (seats + large bags per Uber product type) used to set capacity when posting.
+- Later refinement (not MVP): distinguish carry-on suitcases from checked suitcases in the suitcase cap (e.g. weight a carry-on as ~0.5 toward the cap vs. 1 for a checked bag), since a small roller bag takes less trunk space than a full checked bag. Starting with "all suitcases count as 1" is simpler to ship and can be refined once real usage shows whether bag-space mismatches are actually a problem.
 - Decide on exact time-window tolerance for showing "nearby" trips on the board (e.g. ±45 min) — likely needs tuning after real usage data.
 - Plan seeding strategy for first cohort: target a specific break (e.g. Thanksgiving), recruit first ~20–30 posts manually via group chats/dorm channels/flyers, since the board is only useful once it has real density.
 - Revisit organizer-less, symmetric-group model after first real usage to see if any coordination gaps emerge that need addressing.

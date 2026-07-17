@@ -13,7 +13,7 @@ export interface VehicleType {
 export interface Trip {
   id: string;
   direction: Direction;
-  flight_time: string;
+  departure_time: string;
   pickup_location: string;
   dropoff_location: string;
   vehicle_type_id: string | null;

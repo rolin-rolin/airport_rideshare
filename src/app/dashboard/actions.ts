@@ -38,7 +38,7 @@ export async function createTrip(
   const { supabase } = await requireUser();
 
   const direction = String(formData.get("direction")) as Direction;
-  const flightTime = String(formData.get("flight_time"));
+  const departureTime = String(formData.get("departure_time"));
   const pickupLocation = String(formData.get("pickup_location") ?? "").trim();
   const dropoffLocation = String(formData.get("dropoff_location") ?? "").trim();
   const vehicleTypeId = String(formData.get("vehicle_type_id") ?? "");
@@ -48,7 +48,7 @@ export async function createTrip(
   const groupmeLink = String(formData.get("groupme_link") ?? "").trim();
   const bagCount = Number(formData.get("bag_count") ?? 0);
 
-  if (!pickupLocation || !dropoffLocation || !vehicleTypeId || !flightTime) {
+  if (!pickupLocation || !dropoffLocation || !vehicleTypeId || !departureTime) {
     return { error: "Please fill in all required fields." };
   }
   if (!Number.isFinite(seatCapacity) || !Number.isFinite(bagCapacity)) {
@@ -57,7 +57,7 @@ export async function createTrip(
 
   const { error } = await supabase.rpc("create_trip_with_signup", {
     p_direction: direction,
-    p_flight_time: new Date(flightTime).toISOString(),
+    p_departure_time: new Date(departureTime).toISOString(),
     p_pickup_location: pickupLocation,
     p_dropoff_location: dropoffLocation,
     p_vehicle_type_id: vehicleTypeId,

@@ -63,7 +63,7 @@ export async function getBoardTrips(direction: Direction): Promise<TripWithCount
     .select("*, vehicle_types(name)")
     .eq("direction", direction)
     .in("status", ["open", "full"])
-    .order("flight_time", { ascending: true });
+    .order("departure_time", { ascending: true });
 
   if (tripsError) throw tripsError;
   if (trips.length === 0) return [];

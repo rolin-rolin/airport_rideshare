@@ -44,7 +44,7 @@ Two separate soft/hard caps per tier, backpacks free: a passenger cap (hard, tie
 
 Each trip post includes:
 
-- Flight date/time
+- Departure time — when this ride actually leaves, not the poster's flight time. The two differ (buffer before an outbound flight varies by person, and a from-airport ride leaves whenever the group is curbside and ready, not at "flight time"), and departure time is what should group people on the board — two people on the same flight may still want different pickup times.
 - Pickup location and dropoff location
 - Vehicle type (sets seat capacity and bag capacity)
 - Live count: spots filled / spots left
@@ -70,7 +70,7 @@ The student is expected to join the GroupMe for that trip to coordinate actual p
 
 ### 4.4 Trip completion and cleanup
 
-A trip post is cleaned up (removed from the board) once the ride has actually departed, not simply once the scheduled flight time passes — people's plans shift, and a post should stay usable until the group is actually gone.
+A trip post is cleaned up (removed from the board) once the ride has actually departed, not simply once the scheduled departure time passes — people's plans shift, and a post should stay usable until the group is actually gone.
 
 - Any member of the group can mark the trip as "departed" once the ride has left.
 - If no one confirms departure within **1 hour after the scheduled departure time**, the post is automatically cleaned up.
@@ -112,7 +112,7 @@ Deferred ideas (v2+, not building now):
 ## 7. Data Model (rough sketch)
 
 - **users**: id, school email, name, phone (optional/future), verified school domain, current_signup_id (nullable — enforces the one-active-group-at-a-time rule)
-- **trips**: id, direction (to_airport / from_airport), flight date/time, pickup location, dropoff location, vehicle_type, seat_capacity, bag_capacity, groupme_link, estimated_total_cost, status (open / full / departed / expired), created_by, created_at
+- **trips**: id, direction (to_airport / from_airport), departure_time (when the ride leaves — distinct from any member's individual flight time, see §4.2), pickup location, dropoff location, vehicle_type, seat_capacity, bag_capacity, groupme_link, estimated_total_cost, status (open / full / departed / expired), created_by, created_at
 - **signups**: id, trip_id, user_id, bag_count, joined_at, left_at (nullable)
 
 Live spot count and bag count are computed from active `signups` rows (`left_at IS NULL`) against `seat_capacity` / `bag_capacity` on the trip, which are set from the poster's selected vehicle type.

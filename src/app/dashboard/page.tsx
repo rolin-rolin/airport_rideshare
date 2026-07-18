@@ -1,34 +1,55 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/utils/supabase/server";
+import Link from "next/link";
+import { getBoardTrips, getMyActiveTrip } from "@/lib/trips";
+import type { Direction } from "@/lib/types";
+import { TabNav } from "@/components/TabNav";
+import { TripCard } from "@/components/TripCard";
 
-export default async function DashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ dir?: string }>;
+}) {
+  const { dir } = await searchParams;
+  const direction: Direction = dir === "from_airport" ? "from_airport" : "to_airport";
 
-  if (!user) {
-    redirect("/login");
-  }
+  const [trips, myActiveTrip] = await Promise.all([
+    getBoardTrips(direction),
+    getMyActiveTrip(),
+  ]);
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-zinc-50 dark:bg-black">
-      <div className="w-full max-w-sm rounded-lg border border-black/[.08] bg-white p-8 dark:border-white/[.145] dark:bg-black">
-        <h1 className="mb-1 text-xl font-semibold text-black dark:text-zinc-50">
-          Dashboard
+    <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-6">
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-display-lg font-display font-bold text-foreground">
+          Trip board
         </h1>
-        <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
-          Logged in as {user.email}
-        </p>
-        <form action="/logout" method="post">
-          <button
-            type="submit"
-            className="rounded-full border border-black/[.08] px-5 py-2 text-sm font-medium text-black transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:text-zinc-50 dark:hover:bg-[#1a1a1a]"
-          >
-            Log out
-          </button>
-        </form>
+        <Link
+          href={`/dashboard/new?dir=${direction}`}
+          className="shrink-0 rounded-full bg-primary px-4 py-2 text-label font-display font-semibold text-background transition-colors hover:bg-primary/90"
+        >
+          Post a trip
+        </Link>
       </div>
+
+      <TabNav />
+
+      {trips.length === 0 ? (
+        <p className="mt-8 text-center text-body font-body text-foreground/50">
+          No trips posted yet for this direction.
+        </p>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {trips.map((trip) => (
+            <TripCard
+              key={trip.id}
+              trip={trip}
+              direction={direction}
+              isMine={trip.id === myActiveTrip?.id}
+              canJoin={!myActiveTrip && trip.status === "open"}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

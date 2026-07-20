@@ -32,7 +32,7 @@ Domain-gated to the pilot campus's email domain (e.g. @nd.edu) at MVP. No furthe
 
 Two tabs: To Airport and From Airport.
 
-To post a trip, the poster selects a **vehicle type** (UberX, UberXL, etc.) from a fixed reference list. The vehicle type determines the trip's seat capacity and large-bag capacity — these aren't just a recommendation, they're the cap enforced on that post (see 4.3).
+To post a trip, the poster selects a **vehicle type** (UberX, UberXL, etc.) from a fixed reference list. The vehicle type pre-fills the trip's seat capacity and large-bag capacity from that tier's defaults, but the poster can edit both numbers before posting — e.g. to reflect a specific car's actual trunk space, or a driver willing to squeeze in one more bag than the tier's default assumes. Whatever capacity is set at posting time (default or edited) becomes the cap enforced on that post (see 4.3).
 
 Two separate soft/hard caps per tier, backpacks free: a passenger cap (hard, tied to seatbelts) and a suitcase/checked-bag cap (soft, trunk-based). Backpacks and personal items don't count toward either cap — assumed to travel on laps/at feet, not in the trunk.
 
@@ -46,7 +46,7 @@ Each trip post includes:
 
 - Departure time — when this ride actually leaves, not the poster's flight time. The two differ (buffer before an outbound flight varies by person, and a from-airport ride leaves whenever the group is curbside and ready, not at "flight time"), and departure time is what should group people on the board — two people on the same flight may still want different pickup times.
 - Pickup location and dropoff location
-- Vehicle type (sets seat capacity and bag capacity)
+- Vehicle type (pre-fills seat capacity and bag capacity, both editable by the poster)
 - Live count: spots filled / spots left
 - Live count: baggage spots filled / baggage spots left
 - Estimated cost per person (poster manually enters an estimated total ride cost at MVP; see Section 5)

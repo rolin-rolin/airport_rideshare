@@ -19,8 +19,17 @@ export function TripForm({
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(createTrip, { error: null });
   const [vehicleTypeId, setVehicleTypeId] = useState(vehicleTypes[0]?.id ?? "");
+  const [seatCapacity, setSeatCapacity] = useState(vehicleTypes[0]?.default_seat_capacity ?? 0);
+  const [bagCapacity, setBagCapacity] = useState(vehicleTypes[0]?.default_bag_capacity ?? 0);
 
-  const selectedVehicle = vehicleTypes.find((v) => v.id === vehicleTypeId);
+  function handleVehicleTypeChange(id: string) {
+    setVehicleTypeId(id);
+    const vehicle = vehicleTypes.find((v) => v.id === id);
+    if (vehicle) {
+      setSeatCapacity(vehicle.default_seat_capacity);
+      setBagCapacity(vehicle.default_bag_capacity);
+    }
+  }
 
   const [hasSubmitted, setHasSubmitted] = useState(false);
   useEffect(() => {
@@ -36,12 +45,6 @@ export function TripForm({
       className="flex flex-col gap-4"
     >
       <input type="hidden" name="direction" value={direction} />
-      {selectedVehicle && (
-        <>
-          <input type="hidden" name="seat_capacity" value={selectedVehicle.default_seat_capacity} />
-          <input type="hidden" name="bag_capacity" value={selectedVehicle.default_bag_capacity} />
-        </>
-      )}
 
       <label className={labelClass}>
         Departure time
@@ -64,7 +67,7 @@ export function TripForm({
           name="vehicle_type_id"
           required
           value={vehicleTypeId}
-          onChange={(e) => setVehicleTypeId(e.target.value)}
+          onChange={(e) => handleVehicleTypeChange(e.target.value)}
           className={fieldClass}
         >
           {vehicleTypes.map((v) => (
@@ -74,6 +77,34 @@ export function TripForm({
           ))}
         </select>
       </label>
+
+      <div className="flex gap-4">
+        <label className={`flex-1 ${labelClass}`}>
+          Seat capacity
+          <input
+            type="number"
+            name="seat_capacity"
+            min={1}
+            required
+            value={seatCapacity}
+            onChange={(e) => setSeatCapacity(Number(e.target.value))}
+            className={fieldClass}
+          />
+        </label>
+
+        <label className={`flex-1 ${labelClass}`}>
+          Bag capacity
+          <input
+            type="number"
+            name="bag_capacity"
+            min={0}
+            required
+            value={bagCapacity}
+            onChange={(e) => setBagCapacity(Number(e.target.value))}
+            className={fieldClass}
+          />
+        </label>
+      </div>
 
       <label className={labelClass}>
         Estimated total cost ($)

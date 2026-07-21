@@ -123,6 +123,14 @@ export async function getTripWithMembers(tripId: string): Promise<TripWithMember
 // the persistent group-status indicator required by DESIGN.md §4.3 ("shows
 // trip details and who else is in it") and enforces "one active group at a
 // time" in the UI (the DB's unique index is the actual source of truth).
+//
+// Belt-and-suspenders against the departed-trip bug (see migration 0005,
+// close_trip_signups_on_departure): that trigger is the actual fix — it
+// closes every member's signup (left_at) the moment a trip goes
+// 'departed', which alone would make the `left_at IS NULL` filter below
+// sufficient on its own. The `trips.status` filter here is a redundant
+// second guard so the status bar still disappears immediately even if
+// that trigger hasn't been applied to a given environment yet.
 export async function getMyActiveTrip(): Promise<TripWithMembers | null> {
   const supabase = await createClient();
   const {
@@ -132,9 +140,10 @@ export async function getMyActiveTrip(): Promise<TripWithMembers | null> {
 
   const { data: mySignup, error: mySignupError } = await supabase
     .from("signups")
-    .select("trip_id")
+    .select("trip_id, trips!inner(status)")
     .eq("user_id", user.id)
     .is("left_at", null)
+    .in("trips.status", ["open", "full"])
     .maybeSingle();
 
   if (mySignupError) throw mySignupError;

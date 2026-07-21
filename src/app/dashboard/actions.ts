@@ -130,11 +130,21 @@ export async function leaveTrip(): Promise<ActionState> {
 // Marking a trip departed (DESIGN.md §4.4) is a one-way status flip; RLS
 // policy "Active members can mark a trip departed" (0002) already rejects
 // this for anyone not currently signed up to the trip.
+//
+// Departure is meant to be terminal for everyone in the trip (DESIGN.md
+// §4.4): migration 0005's close_trip_signups_on_departure trigger closes
+// every member's signup (left_at) the moment status flips to 'departed',
+// which is what actually frees the whole group to join/post elsewhere and
+// makes the status bar disappear for all of them. The extra update below
+// is just a same-user fallback for environments where that migration
+// hasn't been applied yet — RLS ("Users can update their own signup")
+// only lets this action close the *caller's* own row, not other members',
+// so it's not a substitute for the trigger, only a partial mitigation.
 export async function markDeparted(
   _prevState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
 
   const tripId = String(formData.get("trip_id") ?? "");
   if (!tripId) return { error: "Invalid trip." };
@@ -145,6 +155,13 @@ export async function markDeparted(
     .eq("id", tripId);
 
   if (error) return { error: friendlyError(error) };
+
+  await supabase
+    .from("signups")
+    .update({ left_at: new Date().toISOString() })
+    .eq("trip_id", tripId)
+    .eq("user_id", user.id)
+    .is("left_at", null);
 
   revalidatePath("/dashboard");
   return { error: null };

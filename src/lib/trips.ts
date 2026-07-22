@@ -8,6 +8,16 @@ import type {
   VehicleType,
 } from "@/lib/types";
 
+// A departed trip stays on the board and keeps its members locked in for
+// this long after departed_at, before a cron sweep frees them (see
+// migration 0006's run_trip_cleanup). Must match that migration's interval.
+const DEPARTED_GRACE_MINUTES = 30;
+
+function isPastDepartedGrace(departedAt: string): boolean {
+  const cutoff = Date.now() - DEPARTED_GRACE_MINUTES * 60_000;
+  return new Date(departedAt).getTime() < cutoff;
+}
+
 // Reference list for the "New Trip" form (DESIGN.md §4.2).
 export async function getVehicleTypes(): Promise<VehicleType[]> {
   const supabase = await createClient();
@@ -52,20 +62,26 @@ function withCounts(
   };
 }
 
-// The board for one tab (To Airport / From Airport). Only open/full trips
-// are shown — departed/expired trips are cleaned off the board per
-// DESIGN.md §4.4, while a full trip stays visible (not hidden) per §4.3.
+// The board for one tab (To Airport / From Airport). open/full trips are
+// always shown (a full trip stays visible, not hidden, per §4.3); a
+// departed trip is also shown until its grace window passes (see
+// DEPARTED_GRACE_MINUTES) — abandoned/expired trips are cleaned off the
+// board per DESIGN.md §4.4 and migration 0006.
 export async function getBoardTrips(direction: Direction): Promise<TripWithCounts[]> {
   const supabase = await createClient();
 
-  const { data: trips, error: tripsError } = await supabase
+  const { data: allTrips, error: tripsError } = await supabase
     .from("trips")
     .select("*, vehicle_types(name)")
     .eq("direction", direction)
-    .in("status", ["open", "full"])
+    .in("status", ["open", "full", "departed"])
     .order("departure_time", { ascending: true });
 
   if (tripsError) throw tripsError;
+
+  const trips = allTrips.filter(
+    (t) => t.status !== "departed" || !isPastDepartedGrace(t.departed_at!),
+  );
   if (trips.length === 0) return [];
 
   const { data: signups, error: signupsError } = await supabase
@@ -124,13 +140,9 @@ export async function getTripWithMembers(tripId: string): Promise<TripWithMember
 // trip details and who else is in it") and enforces "one active group at a
 // time" in the UI (the DB's unique index is the actual source of truth).
 //
-// Belt-and-suspenders against the departed-trip bug (see migration 0005,
-// close_trip_signups_on_departure): that trigger is the actual fix — it
-// closes every member's signup (left_at) the moment a trip goes
-// 'departed', which alone would make the `left_at IS NULL` filter below
-// sufficient on its own. The `trips.status` filter here is a redundant
-// second guard so the status bar still disappears immediately even if
-// that trigger hasn't been applied to a given environment yet.
+// A departed trip counts as still-active for up to DEPARTED_GRACE_MINUTES
+// after departed_at (migration 0006) — after that, the cron sweep closes
+// the signup itself, but until then this treats the member as still in it.
 export async function getMyActiveTrip(): Promise<TripWithMembers | null> {
   const supabase = await createClient();
   const {
@@ -140,14 +152,17 @@ export async function getMyActiveTrip(): Promise<TripWithMembers | null> {
 
   const { data: mySignup, error: mySignupError } = await supabase
     .from("signups")
-    .select("trip_id, trips!inner(status)")
+    .select("trip_id, trips!inner(status, departed_at)")
     .eq("user_id", user.id)
     .is("left_at", null)
-    .in("trips.status", ["open", "full"])
+    .in("trips.status", ["open", "full", "departed"])
     .maybeSingle();
 
   if (mySignupError) throw mySignupError;
   if (!mySignup) return null;
+
+  const trip = mySignup.trips as unknown as { status: string; departed_at: string | null };
+  if (trip.status === "departed" && isPastDepartedGrace(trip.departed_at!)) return null;
 
   return getTripWithMembers(mySignup.trip_id);
 }

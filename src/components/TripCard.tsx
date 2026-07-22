@@ -70,6 +70,10 @@ export function TripCard({
           </span>
         ) : canJoin ? (
           <JoinTripButton tripId={trip.id} />
+        ) : trip.status === "departed" ? (
+          <span className="shrink-0 text-label font-display font-semibold text-foreground/40">
+            Departed
+          </span>
         ) : trip.status === "full" ? (
           <span className="shrink-0 text-label font-display font-semibold text-foreground/40">
             Full

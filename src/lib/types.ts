@@ -1,7 +1,7 @@
 // Mirrors supabase/migrations/0002_trips_and_signups.sql.
 
 export type Direction = "to_airport" | "from_airport";
-export type TripStatus = "open" | "full" | "departed" | "expired";
+export type TripStatus = "open" | "full" | "departed" | "expired" | "abandoned";
 
 export interface VehicleType {
   id: string;

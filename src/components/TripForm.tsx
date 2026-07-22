@@ -33,10 +33,10 @@ export function TripForm({
 
   const [hasSubmitted, setHasSubmitted] = useState(false);
   useEffect(() => {
-    if (hasSubmitted && state.error === null) {
+    if (hasSubmitted && !isPending && state.error === null) {
       router.push("/dashboard");
     }
-  }, [hasSubmitted, state, router]);
+  }, [hasSubmitted, isPending, state, router]);
 
   return (
     <form

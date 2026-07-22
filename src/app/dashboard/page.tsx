@@ -23,12 +23,21 @@ export default async function DashboardPage({
         <h1 className="text-display-lg font-display font-bold text-foreground">
           Trip board
         </h1>
-        <Link
-          href={`/dashboard/new?dir=${direction}`}
-          className="shrink-0 rounded-full bg-primary px-4 py-2 text-label font-display font-semibold text-background transition-colors hover:bg-primary/90"
-        >
-          Post a trip
-        </Link>
+        {myActiveTrip ? (
+          <span
+            title="Leave your current trip before posting a new one"
+            className="shrink-0 cursor-not-allowed rounded-full bg-primary/40 px-4 py-2 text-label font-display font-semibold text-background"
+          >
+            Post a trip
+          </span>
+        ) : (
+          <Link
+            href={`/dashboard/new?dir=${direction}`}
+            className="shrink-0 rounded-full bg-primary px-4 py-2 text-label font-display font-semibold text-background transition-colors hover:bg-primary/90"
+          >
+            Post a trip
+          </Link>
+        )}
       </div>
 
       <TabNav />

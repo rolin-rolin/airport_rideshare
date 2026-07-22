@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getVehicleTypes } from "@/lib/trips";
+import { getMyActiveTrip, getVehicleTypes } from "@/lib/trips";
 import type { Direction } from "@/lib/types";
 import { TripForm } from "@/components/TripForm";
 
@@ -11,7 +11,7 @@ export default async function NewTripPage({
   const { dir } = await searchParams;
   const direction: Direction = dir === "from_airport" ? "from_airport" : "to_airport";
 
-  const vehicleTypes = await getVehicleTypes();
+  const activeTrip = await getMyActiveTrip();
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-5 px-4 py-6">
@@ -27,7 +27,13 @@ export default async function NewTripPage({
         </h1>
       </div>
 
-      <TripForm vehicleTypes={vehicleTypes} direction={direction} />
+      {activeTrip ? (
+        <p className="text-body font-body text-foreground/70">
+          You&apos;re already in a trip. Leave your current trip before posting a new one.
+        </p>
+      ) : (
+        <TripForm vehicleTypes={await getVehicleTypes()} direction={direction} />
+      )}
     </div>
   );
 }

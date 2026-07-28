@@ -1,7 +1,6 @@
 import { getMyActiveTrip } from "@/lib/trips";
 import { CapacityRow } from "@/components/CapacityRow";
 import { LeaveTripButton } from "@/components/LeaveTripButton";
-import { MarkDepartedButton } from "@/components/MarkDepartedButton";
 
 function formatTime(isoTime: string): string {
   return new Date(isoTime).toLocaleTimeString("en-US", {
@@ -39,7 +38,6 @@ export async function GroupStatusBar() {
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <MarkDepartedButton tripId={trip.id} />
           <LeaveTripButton groupmeLink={trip.groupme_link} />
         </div>
       </div>

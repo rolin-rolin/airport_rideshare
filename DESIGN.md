@@ -70,11 +70,12 @@ The student is expected to join the GroupMe for that trip to coordinate actual p
 
 ### 4.4 Trip completion and cleanup
 
-A trip post is cleaned up (removed from the board) once the ride has actually departed, not simply once the scheduled departure time passes — people's plans shift, and a post should stay usable until the group is actually gone.
+There's no manual "mark departed" confirmation step — a post is cleaned up (removed from the board) one of two ways:
 
-- Any member of the group can mark the trip as "departed" once the ride has left.
-- If no one confirms departure within **1 hour after the scheduled departure time**, the post is automatically cleaned up.
-- This confirmation is a simple boolean action, not a full check-in/attendance system — it exists purely to know when a post is stale enough to remove from the board.
+- **Expired**: if the trip's departure time passes and it's still sitting at over an hour past that with no activity, it's automatically cleaned up.
+- **Abandoned**: if every member leaves before the trip ever departs, it's cleaned up immediately (no wait) — the group fizzled out before the ride happened.
+
+Members simply leave the trip individually (§4.3) when they're done with it; there's no group-wide "we've departed" action to coordinate.
 
 ### 4.5 Coordination
 
@@ -112,12 +113,12 @@ Deferred ideas (v2+, not building now):
 ## 7. Data Model (rough sketch)
 
 - **users**: id, school email, name, phone (optional/future), verified school domain, current_signup_id (nullable — enforces the one-active-group-at-a-time rule)
-- **trips**: id, direction (to_airport / from_airport), departure_time (when the ride leaves — distinct from any member's individual flight time, see §4.2), pickup location, dropoff location, vehicle_type, seat_capacity, bag_capacity, groupme_link, estimated_total_cost, status (open / full / departed / expired), created_by, created_at
+- **trips**: id, direction (to_airport / from_airport), departure_time (when the ride leaves — distinct from any member's individual flight time, see §4.2), pickup location, dropoff location, vehicle_type, seat_capacity, bag_capacity, groupme_link, estimated_total_cost, status (open / full / expired / abandoned), created_by, created_at
 - **signups**: id, trip_id, user_id, bag_count, joined_at, left_at (nullable)
 
 Live spot count and bag count are computed from active `signups` rows (`left_at IS NULL`) against `seat_capacity` / `bag_capacity` on the trip, which are set from the poster's selected vehicle type.
 
-Trip `status` transitions: `open` → `full` (capacity reached) → back to `open` if someone leaves and frees a spot → `departed` (member confirms) or `expired` (no confirmation within 1 hour of scheduled departure) → removed from the board.
+Trip `status` transitions: `open` → `full` (capacity reached) → back to `open` if someone leaves and frees a spot → `expired` (still active more than 1 hour past scheduled departure) or `abandoned` (last active member leaves) → removed from the board.
 
 ## 8. Tech Stack
 

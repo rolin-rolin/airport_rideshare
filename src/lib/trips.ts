@@ -33,7 +33,8 @@ type SignupRow = {
 // from active (left_at IS NULL) signups — DESIGN.md §7: "Live spot count and
 // bag count are computed from active signups rows against seat_capacity /
 // bag_capacity on the trip."
-function withCounts(
+// Exported for unit testing; not otherwise part of the public API surface.
+export function withCounts(
   trip: Trip & { vehicle_types: { name: string } | null },
   activeSignups: SignupRow[],
 ): TripWithCounts {
@@ -82,7 +83,8 @@ export async function getBoardTrips(direction: Direction): Promise<TripWithCount
   return trips.map((trip) => withCounts(trip, signups as unknown as SignupRow[]));
 }
 
-function toMembers(signups: SignupRow[]): SignupMember[] {
+// Exported for unit testing; not otherwise part of the public API surface.
+export function toMembers(signups: SignupRow[]): SignupMember[] {
   return signups
     .map((s) => ({
       id: s.id,

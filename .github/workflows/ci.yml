@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  checks:
+    name: Lint, unit tests, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - run: npm run test:unit
+
+      # Placeholder values only -- nothing here talks to a real Supabase
+      # project. None of the module-scope env reads in src/utils/supabase/*
+      # or src/app/login/actions.ts throw if a value is missing/fake; these
+      # just keep the build's inlined NEXT_PUBLIC_* values well-formed.
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: placeholder-service-role-key
+          ALLOWED_EMAIL_DOMAIN: nd.edu
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
+
+  db-tests:
+    name: pgTAP database tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pinned to match the CLI version used in local dev (see
+      # supabase/config.toml comments / `supabase --version` locally) so CI
+      # and local runs exercise the same migration/test behavior.
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.109.1
+
+      # Starts Postgres + the full local stack from supabase/config.toml,
+      # applying every migration in supabase/migrations/ in order --
+      # equivalent to `supabase db reset` against a clean container.
+      - run: supabase start
+
+      - run: supabase test db --local

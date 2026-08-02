@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# dev scripts runtime (pidfile/log for scripts/dev-up.sh)
+/.dev-runtime/
+
 # production
 /build
 

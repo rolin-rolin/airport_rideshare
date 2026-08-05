@@ -37,6 +37,7 @@ export async function createTrip(
   const estimatedTotalCostRaw = String(formData.get("estimated_total_cost") ?? "").trim();
   const groupmeLink = String(formData.get("groupme_link") ?? "").trim();
   const bagCount = Number(formData.get("bag_count") ?? 0);
+  const maxBagsPerPersonRaw = String(formData.get("max_bags_per_person") ?? "").trim();
 
   if (!pickupLocation || !dropoffLocation || !vehicleTypeId || !departureTime) {
     return { error: "Please fill in all required fields." };
@@ -56,6 +57,7 @@ export async function createTrip(
     p_estimated_total_cost: estimatedTotalCostRaw ? Number(estimatedTotalCostRaw) : null,
     p_groupme_link: groupmeLink || null,
     p_bag_count: bagCount,
+    p_max_bags_per_person: maxBagsPerPersonRaw ? Number(maxBagsPerPersonRaw) : null,
   });
 
   if (error) return { error: friendlyError(error) };

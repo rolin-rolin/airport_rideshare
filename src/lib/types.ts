@@ -19,6 +19,7 @@ export interface Trip {
   vehicle_type_id: string | null;
   seat_capacity: number;
   bag_capacity: number;
+  max_bags_per_person: number | null;
   estimated_total_cost: number | null;
   groupme_link: string | null;
   status: TripStatus;

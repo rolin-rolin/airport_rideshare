@@ -12,7 +12,7 @@
 --
 -- Run with: supabase test db --local
 BEGIN;
-SELECT plan(6);
+SELECT plan(12);
 
 insert into auth.users (id, email) values
   ('e1111111-1111-1111-1111-111111111111', 'ctws-user1@nd.edu'),
@@ -109,6 +109,116 @@ SELECT is(
   (select count(*) from public.trips where created_by = 'e2222222-2222-2222-2222-222222222222')::int,
   0,
   'the rejected call left no orphaned trips row behind -- both inserts rolled back together'
+);
+
+-- ============================================================
+-- Case 4: the other way the second insert can fail -- a poster declaring
+-- more bags than the vehicle they're posting can hold. Case 3 covered a
+-- unique-index violation (23505); this one trips check_signup_capacity
+-- (P0001), a different trigger on the same insert, and must roll the trips
+-- insert back just the same.
+-- ============================================================
+
+insert into auth.users (id, email) values
+  ('e4444444-4444-4444-4444-444444444444', 'ctws-user4@nd.edu');
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "e4444444-4444-4444-4444-444444444444", "role":"authenticated"}';
+
+SELECT throws_ok(
+  $$ select public.create_trip_with_signup(
+       'to_airport', now() + interval '2 hours', 'Dorm', 'Airport',
+       null, 4, 2, 40, null, 3
+     ) $$,
+  'P0001',
+  'This trip is full: not enough bag capacity remaining.',
+  'posting with more bags than the trip''s own bag_capacity is rejected'
+);
+
+reset role;
+
+SELECT is(
+  (select count(*) from public.trips where created_by = 'e4444444-4444-4444-4444-444444444444')::int,
+  0,
+  'the over-capacity post left no orphaned trips row behind either'
+);
+
+-- ============================================================
+-- Case 5: vehicle_type_id is passed through to the trip row. Every other
+-- case here passes null for it, so this is the only coverage that the
+-- argument is stored at all and that the FK to vehicle_types resolves.
+-- ============================================================
+
+insert into auth.users (id, email) values
+  ('e5555555-5555-5555-5555-555555555555', 'ctws-user5@nd.edu');
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "e5555555-5555-5555-5555-555555555555", "role":"authenticated"}';
+
+create temporary table ctws_vt as
+select public.create_trip_with_signup(
+  'from_airport', now() + interval '4 hours', 'Airport', 'Dorm',
+  (select id from public.vehicle_types where name = 'XL'), 6, 4, 60, null, 2
+) as trip_id;
+
+SELECT is(
+  (select vehicle_type_id from public.trips where id = (select trip_id from ctws_vt)),
+  (select id from public.vehicle_types where name = 'XL'),
+  'the posted vehicle type is stored on the trip'
+);
+
+reset role;
+
+-- ============================================================
+-- Case 6: max_bags_per_person (migration 0010) is a trailing argument with a
+-- default, so every call above omits it -- these two cases are the only
+-- coverage that passing it does anything, and that the poster is held to
+-- their own cap rather than exempt from it.
+-- ============================================================
+
+insert into auth.users (id, email) values
+  ('e6666666-6666-6666-6666-666666666666', 'ctws-user6@nd.edu'),
+  ('e7777777-7777-7777-7777-777777777777', 'ctws-user7@nd.edu');
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "e6666666-6666-6666-6666-666666666666", "role":"authenticated"}';
+
+create temporary table ctws_cap as
+select public.create_trip_with_signup(
+  'to_airport', now() + interval '2 hours', 'Dorm', 'Airport',
+  null, 4, 8, 40, null, 1, 2
+) as trip_id;
+
+SELECT is(
+  (select max_bags_per_person from public.trips where id = (select trip_id from ctws_cap)),
+  2,
+  'the per-person bag cap passed to create_trip_with_signup is stored on the trip'
+);
+
+reset role;
+
+-- The poster's own auto-join runs through check_signup_capacity like any
+-- other join, so a poster declaring more bags than the cap they just set is
+-- rejected and the trip insert rolls back with it.
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "e7777777-7777-7777-7777-777777777777", "role":"authenticated"}';
+
+SELECT throws_ok(
+  $$ select public.create_trip_with_signup(
+       'to_airport', now() + interval '2 hours', 'Dorm', 'Airport',
+       null, 4, 8, 40, null, 3, 2
+     ) $$,
+  'P0001',
+  'This trip limits riders to 2 bag(s) each.',
+  'a poster is held to the per-person cap they set for their own trip'
+);
+
+reset role;
+
+SELECT is(
+  (select count(*) from public.trips where created_by = 'e7777777-7777-7777-7777-777777777777')::int,
+  0,
+  'that rejection rolled the trips insert back too, leaving no orphan'
 );
 
 SELECT * FROM finish();

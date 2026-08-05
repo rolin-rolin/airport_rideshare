@@ -8,7 +8,7 @@
 --
 -- Run with: supabase test db --local
 BEGIN;
-SELECT plan(5);
+SELECT plan(6);
 
 insert into auth.users (id, email) values
   ('f1111111-1111-1111-1111-111111111111', 'oneactive-user1@nd.edu'),
@@ -75,14 +75,28 @@ SELECT lives_ok(
 
 -- ============================================================
 -- Case 4: the index is scoped per-user, not global -- a different user can
--- hold an active signup on the first trip at the same time.
+-- hold an active signup at the same time as user 1.
+--
+-- This joins the *second* trip, the one user 1 is now active on, which is
+-- the more direct demonstration anyway: two users active concurrently on one
+-- trip. The first trip is no longer usable here -- user 1 leaving it in
+-- Case 3 emptied it, so sync_trip_status flipped it to 'abandoned' and
+-- migration 0010's guard now refuses joins to it.
 -- ============================================================
 
 SELECT lives_ok(
   $$ insert into public.signups (trip_id, user_id, bag_count)
-     values ('11111111-0000-0000-0000-000000000001',
+     values ('11111111-0000-0000-0000-000000000002',
              'f2222222-2222-2222-2222-222222222222', 0) $$,
   'the unique index is scoped per-user: a different user can be active concurrently'
+);
+
+SELECT is(
+  (select count(*) from public.signups
+   where trip_id = '11111111-0000-0000-0000-000000000002'
+     and left_at is null)::int,
+  2,
+  'both users hold an active signup on the same trip at once'
 );
 
 SELECT * FROM finish();

@@ -12,6 +12,7 @@ function makeTrip(overrides: Partial<Trip> = {}): Trip & { vehicle_types: { name
     vehicle_type_id: "vt-1",
     seat_capacity: 4,
     bag_capacity: 4,
+    max_bags_per_person: null,
     estimated_total_cost: 40,
     groupme_link: null,
     status: "open",

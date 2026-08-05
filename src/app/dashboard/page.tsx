@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getBoardTrips, getMyActiveTrip } from "@/lib/trips";
 import type { Direction } from "@/lib/types";
 import { TabNav } from "@/components/TabNav";
-import { TripCard } from "@/components/TripCard";
+import { TripsBoard } from "@/components/TripsBoard";
 import { LogoutButton } from "@/components/LogoutButton";
 
 export default async function DashboardPage({
@@ -51,17 +51,7 @@ export default async function DashboardPage({
           No trips posted yet for this direction.
         </p>
       ) : (
-        <div className="flex flex-col gap-3">
-          {trips.map((trip) => (
-            <TripCard
-              key={trip.id}
-              trip={trip}
-              direction={direction}
-              isMine={trip.id === myActiveTrip?.id}
-              canJoin={!myActiveTrip && trip.status === "open"}
-            />
-          ))}
-        </div>
+        <TripsBoard trips={trips} direction={direction} myActiveTrip={myActiveTrip} />
       )}
     </div>
   );

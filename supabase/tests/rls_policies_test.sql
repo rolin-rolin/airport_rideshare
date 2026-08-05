@@ -23,9 +23,13 @@
 --   ... statement under test ...
 --   reset role;  -- back to superuser before the next fixture/case
 --
+-- Every assertion below is scoped to this file's own fixture rows by id.
+-- Counting a whole table instead would make the suite pass only against an
+-- empty database (CI) and fail on any dev machine carrying seed/dev users.
+--
 -- Run with: supabase test db --local
 BEGIN;
-SELECT plan(17);
+SELECT plan(27);
 
 -- Shared fixtures: two users (A owns a trip + is on its roster, B is a
 -- bystander used to prove cross-user access is denied where expected).
@@ -54,8 +58,13 @@ values
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "a2222222-2222-2222-2222-222222222222", "role":"authenticated"}';
 
+-- User B sees A's profile as well as their own, which is the actual claim
+-- ("not just their own") -- scoped to the two fixture ids so unrelated rows
+-- already in the database can't affect the count.
 SELECT is(
-  (select count(*) from public.profiles)::int,
+  (select count(*) from public.profiles
+   where id in ('a1111111-1111-1111-1111-111111111111',
+                'a2222222-2222-2222-2222-222222222222'))::int,
   2,
   'authenticated user can view every profile row, not just their own'
 );
@@ -71,6 +80,28 @@ SELECT is(
 );
 
 reset role;
+
+-- profiles is select-only: 0009 grants no INSERT/UPDATE/DELETE to anyone, so
+-- a user cannot rewrite the email their profile was provisioned with by the
+-- domain gate (0001). Rejected at the grant level, before RLS is consulted.
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "a1111111-1111-1111-1111-111111111111", "role":"authenticated"}';
+
+SELECT throws_ok(
+  $$ update public.profiles set email = 'forged@nd.edu'
+     where id = 'a1111111-1111-1111-1111-111111111111' $$,
+  '42501',
+  'permission denied for table profiles',
+  'a user cannot update their own profile row (no update grant or policy)'
+);
+
+reset role;
+
+SELECT is(
+  (select email from public.profiles where id = 'a1111111-1111-1111-1111-111111111111'),
+  'rls-userA@nd.edu',
+  'the rejected profile update left the email unchanged'
+);
 
 -- ============================================================
 -- vehicle_types: select-only, "to authenticated using (true)"
@@ -92,6 +123,21 @@ SELECT is(
   (select count(*) from public.vehicle_types)::int,
   0,
   'anon has no access to vehicle_types'
+);
+
+reset role;
+
+-- vehicle_types is reference data seeded by migration 0002 -- select-only for
+-- app users, so nobody can invent a vehicle tier with arbitrary capacities.
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "a1111111-1111-1111-1111-111111111111", "role":"authenticated"}';
+
+SELECT throws_ok(
+  $$ insert into public.vehicle_types (name, default_seat_capacity, default_bag_capacity)
+     values ('Forged', 99, 99) $$,
+  '42501',
+  'permission denied for table vehicle_types',
+  'a user cannot insert a vehicle type (reference data is select-only)'
 );
 
 reset role;
@@ -179,6 +225,28 @@ SELECT is(
 );
 
 reset role;
+
+-- No DELETE grant on trips: a trip is only ever ended by moving it to a
+-- terminal status ('expired'/'abandoned'), never removed. A hard delete would
+-- also cascade away its signups (0002's on delete cascade), destroying the
+-- history the soft-delete model exists to keep.
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "a1111111-1111-1111-1111-111111111111", "role":"authenticated"}';
+
+SELECT throws_ok(
+  $$ delete from public.trips where id = 'f1111111-0000-0000-0000-000000000001' $$,
+  '42501',
+  'permission denied for table trips',
+  'even the trip owner cannot delete a trip (no delete grant)'
+);
+
+reset role;
+
+SELECT is(
+  (select count(*) from public.trips where id = 'f1111111-0000-0000-0000-000000000001')::int,
+  1,
+  'the rejected delete left the trip row in place'
+);
 
 set local role anon;
 reset request.jwt.claims;
@@ -274,6 +342,29 @@ SELECT is(
   'user cannot update another user''s signup (USING clause filters it out)'
 );
 
+-- Leaving is a soft delete (left_at set, 0002) and restrict_signup_updates
+-- polices that transition. A DELETE grant would route straight around it --
+-- a member could erase their signup instead of leaving, taking the row that
+-- sync_trip_status and signups_one_active_per_user both read with it. No
+-- delete grant exists, so this is rejected outright.
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "a1111111-1111-1111-1111-111111111111", "role":"authenticated"}';
+
+SELECT throws_ok(
+  $$ delete from public.signups where id = 'f2222222-0000-0000-0000-000000000001' $$,
+  '42501',
+  'permission denied for table signups',
+  'a user cannot delete their own signup; leaving must go through left_at'
+);
+
+reset role;
+
+SELECT is(
+  (select count(*) from public.signups where id = 'f2222222-0000-0000-0000-000000000001')::int,
+  1,
+  'the rejected delete left the signup row in place'
+);
+
 set local role anon;
 reset request.jwt.claims;
 
@@ -281,6 +372,58 @@ SELECT is(
   (select count(*) from public.signups)::int,
   0,
   'anon has no access to signups'
+);
+
+reset role;
+
+-- anon holds only a SELECT grant on signups (0009), so both write paths fail
+-- at the grant level -- there is no anon-facing join or leave.
+set local role anon;
+reset request.jwt.claims;
+
+SELECT throws_ok(
+  $$ insert into public.signups (trip_id, user_id, bag_count)
+     values ('f1111111-0000-0000-0000-000000000001',
+             'a1111111-1111-1111-1111-111111111111', 1) $$,
+  '42501',
+  'permission denied for table signups',
+  'anon cannot join a trip (no insert grant on signups)'
+);
+
+reset role;
+
+set local role anon;
+reset request.jwt.claims;
+
+SELECT throws_ok(
+  $$ update public.signups set left_at = now()
+     where id = 'f2222222-0000-0000-0000-000000000002' $$,
+  '42501',
+  'permission denied for table signups',
+  'anon cannot leave a trip (no update grant on signups)'
+);
+
+reset role;
+
+-- ============================================================
+-- create_trip_with_signup: security definer, so it runs as the owner and
+-- bypasses RLS entirely. Postgres grants EXECUTE on functions to PUBLIC by
+-- default, which means anon can reach it despite 0003 only naming
+-- `authenticated` -- its own auth.uid() guard is the thing actually holding
+-- the door, so assert that directly.
+-- ============================================================
+
+set local role anon;
+reset request.jwt.claims;
+
+SELECT throws_ok(
+  $$ select public.create_trip_with_signup(
+       'to_airport', now() + interval '2 hours', 'Dorm', 'Airport',
+       null, 4, 2, 40, null, 1
+     ) $$,
+  'P0001',
+  'Not authenticated',
+  'anon reaching create_trip_with_signup is stopped by its own auth.uid() guard'
 );
 
 reset role;

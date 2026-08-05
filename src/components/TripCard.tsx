@@ -20,14 +20,20 @@ export function TripCard({
   direction,
   isMine,
   canJoin,
+  blockedReason = null,
 }: {
   trip: TripWithCounts;
   direction: Direction;
   isMine: boolean;
   canJoin: boolean;
+  blockedReason?: string | null;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-background p-5">
+    <div
+      className={`rounded-xl border border-border bg-background p-5 ${
+        blockedReason && !isMine ? "opacity-50" : ""
+      }`}
+    >
       <p className="text-label font-body text-foreground/50">
         {DIRECTION_LABEL[direction]}
       </p>
@@ -56,6 +62,12 @@ export function TripCard({
         </p>
       )}
 
+      {trip.max_bags_per_person != null && (
+        <p className="mt-1.5 text-label font-body text-foreground/50">
+          Max {trip.max_bags_per_person} bag{trip.max_bags_per_person === 1 ? "" : "s"} per person
+        </p>
+      )}
+
       <div className="mt-1.5 flex items-center justify-between gap-3">
         <CapacityRow
           seatsFilled={trip.seats_filled}
@@ -67,6 +79,13 @@ export function TripCard({
         {isMine ? (
           <span className="shrink-0 text-label font-display font-semibold text-primary">
             Your trip
+          </span>
+        ) : blockedReason ? (
+          <span
+            title={blockedReason}
+            className="shrink-0 text-label font-display font-semibold text-foreground/40"
+          >
+            Won&apos;t fit
           </span>
         ) : canJoin ? (
           <JoinTripButton tripId={trip.id} />

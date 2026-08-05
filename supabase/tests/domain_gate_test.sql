@@ -10,7 +10,7 @@
 --
 -- Run with: supabase test db --local
 BEGIN;
-SELECT plan(4);
+SELECT plan(7);
 
 -- ============================================================
 -- Case 1: nd.edu email is accepted and provisions a profile row.
@@ -51,6 +51,46 @@ SELECT is(
   (select count(*) from public.profiles where id = 'd2222222-2222-2222-2222-222222222222')::int,
   0,
   'rejected signup leaves no orphaned profiles row behind'
+);
+
+-- ============================================================
+-- Case 3: edge cases in how the domain is matched.
+-- ============================================================
+
+-- handle_new_user compares split_part(email, '@', 2) against a lowercase
+-- literal, so the match is case-sensitive. In practice GoTrue lowercases
+-- emails before they reach auth.users, which is why this has never bitten --
+-- but anything inserting directly (admin API, seed script, this test) can
+-- still hit it. Pinned so the behavior is a decision rather than an
+-- accident: if the gate is ever changed to lowercase its input, this test
+-- should fail and be updated to lives_ok.
+SELECT throws_ok(
+  $$ insert into auth.users (id, email) values
+     ('d3333333-3333-3333-3333-333333333333', 'shouty@ND.EDU') $$,
+  'P0001',
+  'Email domain not allowed. Please use your nd.edu school email.',
+  'the domain match is case-sensitive: an uppercase ND.EDU is rejected'
+);
+
+-- Subdomains are not the allowed domain: split_part returns the whole
+-- 'mail.nd.edu', which doesn't equal 'nd.edu'. Guards against a future
+-- rewrite to a suffix/LIKE match quietly widening the gate.
+SELECT throws_ok(
+  $$ insert into auth.users (id, email) values
+     ('d4444444-4444-4444-4444-444444444444', 'student@mail.nd.edu') $$,
+  'P0001',
+  'Email domain not allowed. Please use your nd.edu school email.',
+  'a subdomain of the allowed domain is still rejected'
+);
+
+-- An address with no @ at all: split_part returns an empty string, which
+-- also fails the comparison rather than erroring out.
+SELECT throws_ok(
+  $$ insert into auth.users (id, email) values
+     ('d5555555-5555-5555-5555-555555555555', 'not-an-email') $$,
+  'P0001',
+  'Email domain not allowed. Please use your nd.edu school email.',
+  'an address with no domain part is rejected rather than erroring'
 );
 
 SELECT * FROM finish();

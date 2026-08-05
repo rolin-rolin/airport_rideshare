@@ -107,6 +107,17 @@ export function TripForm({
       </div>
 
       <label className={labelClass}>
+        Max luggage per person (optional)
+        <input
+          type="number"
+          name="max_bags_per_person"
+          min={0}
+          placeholder="No limit"
+          className={fieldClass}
+        />
+      </label>
+
+      <label className={labelClass}>
         Estimated total cost ($)
         <input type="number" name="estimated_total_cost" min={0} step="0.01" placeholder="36" className={fieldClass} />
       </label>

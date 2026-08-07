@@ -1,7 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useActionState, useState } from "react";
 import { createTrip } from "@/app/dashboard/actions";
 import type { Direction, VehicleType } from "@/lib/types";
 
@@ -16,7 +15,6 @@ export function TripForm({
   vehicleTypes: VehicleType[];
   direction: Direction;
 }) {
-  const router = useRouter();
   const [state, formAction, isPending] = useActionState(createTrip, { error: null });
   const [vehicleTypeId, setVehicleTypeId] = useState(vehicleTypes[0]?.id ?? "");
   const [seatCapacity, setSeatCapacity] = useState(vehicleTypes[0]?.default_seat_capacity ?? 0);
@@ -31,22 +29,11 @@ export function TripForm({
     }
   }
 
-  // Land on the new trip's own page rather than the board: a private trip
-  // never appears on the board, so that page is the only place the poster
-  // can get its share link.
-  const [hasSubmitted, setHasSubmitted] = useState(false);
-  useEffect(() => {
-    if (hasSubmitted && !isPending && state.error === null) {
-      router.push(state.tripId ? `/dashboard/trips/${state.tripId}` : "/dashboard");
-    }
-  }, [hasSubmitted, isPending, state, router]);
-
+  // On success createTrip redirects server-side (see actions.ts) straight to
+  // the new trip's page, so this component only ever sees state.error !=
+  // null -- there's no success state to react to here.
   return (
-    <form
-      action={formAction}
-      onSubmit={() => setHasSubmitted(true)}
-      className="flex flex-col gap-4"
-    >
+    <form action={formAction} className="flex flex-col gap-4">
       <input type="hidden" name="direction" value={direction} />
 
       <label className={labelClass}>

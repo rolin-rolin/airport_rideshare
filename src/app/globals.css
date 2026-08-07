@@ -30,3 +30,37 @@ body {
   color: var(--color-foreground);
   font-family: var(--font-body), sans-serif;
 }
+
+/* Live trip-board updates (see TripsBoard/TripCard/GroupStatusFlash). */
+@keyframes trip-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes trip-card-flash {
+  0% {
+    background-color: color-mix(in srgb, var(--color-live) 18%, var(--color-background));
+    border-color: var(--color-live);
+  }
+  100% {
+    background-color: var(--color-background);
+    border-color: var(--color-border);
+  }
+}
+
+@keyframes trip-card-exit {
+  from {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}

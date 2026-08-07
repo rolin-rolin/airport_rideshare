@@ -1,14 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import type { Direction } from "@/lib/types";
 import { friendlyError } from "@/lib/friendly-error";
 
-// tripId is set only by createTrip, so the form can send the poster to the
-// new trip's page — a private trip has no board entry, so that page is the
-// only place its share link exists.
-type ActionState = { error: string | null; tripId?: string };
+type ActionState = { error: string | null };
 
 async function requireUser() {
   const supabase = await createClient();
@@ -69,7 +67,17 @@ export async function createTrip(
   if (error) return { error: friendlyError(error) };
 
   revalidatePath("/dashboard");
-  return { error: null, tripId: tripId as string };
+  // redirect() here (server-side), not a tripId returned for TripForm to
+  // router.push() client-side: revalidatePath above invalidates /dashboard's
+  // router-cache entry, which (since it shares this layout) also causes
+  // Next to refetch /dashboard/new's own Server Component -- getMyActiveTrip()
+  // now sees the trip just created and swaps the form for the "already in a
+  // trip" gate. That refetch was winning the race against a client-side
+  // useEffect + router.push in TripForm, permanently stranding the poster on
+  // the gate instead of landing on their new trip. redirect() thrown from
+  // inside the action sidesteps the race entirely by leaving the page before
+  // that refetch has anything to land on.
+  redirect(`/dashboard/trips/${tripId}`);
 }
 
 // Capacity (seats/bags) and the one-active-group rule are enforced by DB

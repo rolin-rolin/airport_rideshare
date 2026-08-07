@@ -1,8 +1,18 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+
+// Pages with no live board/roster data worth refreshing, where a
+// self-triggered realtime event could otherwise race the page's own
+// post-mutation navigation -- e.g. /dashboard/new: posting a trip commits a
+// `trips` row, which fires this same listener via the tab's own
+// subscription, and createTrip (actions.ts) redirects server-side once the
+// write succeeds. There's no upside to also refreshing this page's stale
+// getMyActiveTrip() in the moment before that redirect lands, and doing so
+// risks flashing the "already in a trip" gate mid-navigation.
+const REALTIME_REFRESH_EXCLUDED_PATHS = ["/dashboard/new"];
 
 // Keeps an open dashboard tab in sync with changes to trips/signups that
 // didn't originate from this tab's own server actions -- most notably the
@@ -18,6 +28,12 @@ import { createClient } from "@/utils/supabase/client";
 // getBoardTrips/getMyActiveTrip wouldn't already return.
 export function TripsRealtimeListener() {
   const router = useRouter();
+  const pathname = usePathname();
+  const pathnameRef = useRef(pathname);
+
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -29,6 +45,7 @@ export function TripsRealtimeListener() {
       if (refreshTimeout) return;
       refreshTimeout = setTimeout(() => {
         refreshTimeout = null;
+        if (REALTIME_REFRESH_EXCLUDED_PATHS.includes(pathnameRef.current)) return;
         router.refresh();
       }, 300);
     };

@@ -1,6 +1,7 @@
 import { getMyActiveTrip } from "@/lib/trips";
 import { CapacityRow } from "@/components/CapacityRow";
 import { LeaveTripButton } from "@/components/LeaveTripButton";
+import { GroupStatusFlash } from "@/components/GroupStatusFlash";
 
 function formatTime(isoTime: string): string {
   return new Date(isoTime).toLocaleTimeString("en-US", {
@@ -14,7 +15,11 @@ export async function GroupStatusBar() {
   if (!trip) return null;
 
   return (
-    <div className="border-b border-border bg-primary/[.06]">
+    <GroupStatusFlash
+      tripId={trip.id}
+      seatsFilled={trip.seats_filled}
+      bagsFilled={trip.bags_filled}
+    >
       <div className="mx-auto flex max-w-2xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-label font-display font-semibold uppercase tracking-wide text-primary">
@@ -41,6 +46,6 @@ export async function GroupStatusBar() {
           <LeaveTripButton groupmeLink={trip.groupme_link} />
         </div>
       </div>
-    </div>
+    </GroupStatusFlash>
   );
 }

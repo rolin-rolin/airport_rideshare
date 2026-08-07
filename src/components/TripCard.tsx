@@ -22,18 +22,26 @@ export function TripCard({
   isMine,
   canJoin,
   blockedReason = null,
+  flash = false,
+  removing = false,
 }: {
   trip: TripWithCounts;
   direction: Direction;
   isMine: boolean;
   canJoin: boolean;
   blockedReason?: string | null;
+  flash?: boolean;
+  removing?: boolean;
 }) {
   return (
     <div
-      className={`relative rounded-xl border border-border bg-background p-5 transition-colors hover:border-primary/40 ${
-        blockedReason && !isMine ? "opacity-50" : ""
-      }`}
+      className={`relative rounded-xl border border-border bg-background p-5 transition-colors hover:border-primary/40 animate-[trip-card-enter_0.35s_ease-out] ${
+        removing
+          ? "pointer-events-none animate-[trip-card-exit_0.4s_ease-in_1s_forwards] opacity-50"
+          : flash
+            ? "animate-[trip-card-flash_1.2s_ease-out]"
+            : ""
+      } ${blockedReason && !isMine && !removing ? "opacity-50" : ""}`}
     >
       {/* Stretched link: covers the card so the whole thing opens the trip
           detail page, without wrapping the join form in an anchor (nesting
@@ -87,7 +95,11 @@ export function TripCard({
           bagCapacity={trip.bag_capacity}
         />
 
-        {isMine ? (
+        {removing ? (
+          <span className="shrink-0 text-label font-display font-semibold text-foreground/40">
+            No longer available
+          </span>
+        ) : isMine ? (
           <span className="shrink-0 text-label font-display font-semibold text-primary">
             Your trip
           </span>

@@ -42,6 +42,12 @@ if (error) {
 }
 
 const otp = data.properties.email_otp;
+// A brand-new email comes back as verification_type "signup", not
+// "magiclink" -- /auth/dev-otp needs the real type or verifyOtp rejects a
+// perfectly fresh token as expired (see route.ts for why).
+const type = data.properties.verification_type;
 const appUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 console.log(`\nVisit this URL to log in as ${email}:\n`);
-console.log(`${appUrl}/auth/dev-otp?email=${encodeURIComponent(email)}&otp=${otp}\n`);
+console.log(
+  `${appUrl}/auth/dev-otp?email=${encodeURIComponent(email)}&otp=${otp}&type=${type}\n`,
+);

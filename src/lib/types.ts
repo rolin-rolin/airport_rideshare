@@ -3,6 +3,10 @@
 export type Direction = "to_airport" | "from_airport";
 export type TripStatus = "open" | "full" | "expired" | "abandoned";
 
+// Whether a trip appears on the public board or is reachable only by its
+// link (migration 0013). Affects discovery only — joining is identical.
+export type TripVisibility = "public" | "private";
+
 export interface VehicleType {
   id: string;
   name: string;
@@ -23,6 +27,7 @@ export interface Trip {
   estimated_total_cost: number | null;
   groupme_link: string | null;
   status: TripStatus;
+  visibility: TripVisibility;
   created_by: string;
   created_at: string;
 }

@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { toMembers, withCounts } from "./trips";
 import type { Trip } from "./types";
 
-function makeTrip(overrides: Partial<Trip> = {}): Trip & { vehicle_types: { name: string } | null } {
+type TripRow = Trip & { vehicle_types: { name: string } | null };
+
+function makeTrip(overrides: Partial<TripRow> = {}): TripRow {
   return {
     id: "trip-1",
     direction: "to_airport",
@@ -16,6 +18,7 @@ function makeTrip(overrides: Partial<Trip> = {}): Trip & { vehicle_types: { name
     estimated_total_cost: 40,
     groupme_link: null,
     status: "open",
+    visibility: "public",
     created_by: "user-1",
     created_at: "2026-08-01T10:00:00.000Z",
     vehicle_types: { name: "Standard" },

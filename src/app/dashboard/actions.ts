@@ -5,7 +5,10 @@ import { createClient } from "@/utils/supabase/server";
 import type { Direction } from "@/lib/types";
 import { friendlyError } from "@/lib/friendly-error";
 
-type ActionState = { error: string | null };
+// tripId is set only by createTrip, so the form can send the poster to the
+// new trip's page — a private trip has no board entry, so that page is the
+// only place its share link exists.
+type ActionState = { error: string | null; tripId?: string };
 
 async function requireUser() {
   const supabase = await createClient();
@@ -38,6 +41,8 @@ export async function createTrip(
   const groupmeLink = String(formData.get("groupme_link") ?? "").trim();
   const bagCount = Number(formData.get("bag_count") ?? 0);
   const maxBagsPerPersonRaw = String(formData.get("max_bags_per_person") ?? "").trim();
+  // Unchecked checkboxes aren't submitted at all, so presence is the value.
+  const visibility = formData.get("visibility") ? "private" : "public";
 
   if (!pickupLocation || !dropoffLocation || !vehicleTypeId || !departureTime) {
     return { error: "Please fill in all required fields." };
@@ -46,7 +51,7 @@ export async function createTrip(
     return { error: "Seat and bag capacity must be numbers." };
   }
 
-  const { error } = await supabase.rpc("create_trip_with_signup", {
+  const { data: tripId, error } = await supabase.rpc("create_trip_with_signup", {
     p_direction: direction,
     p_departure_time: new Date(departureTime).toISOString(),
     p_pickup_location: pickupLocation,
@@ -58,12 +63,13 @@ export async function createTrip(
     p_groupme_link: groupmeLink || null,
     p_bag_count: bagCount,
     p_max_bags_per_person: maxBagsPerPersonRaw ? Number(maxBagsPerPersonRaw) : null,
+    p_visibility: visibility,
   });
 
   if (error) return { error: friendlyError(error) };
 
   revalidatePath("/dashboard");
-  return { error: null };
+  return { error: null, tripId: tripId as string };
 }
 
 // Capacity (seats/bags) and the one-active-group rule are enforced by DB
@@ -88,6 +94,8 @@ export async function joinTrip(
   if (error) return { error: friendlyError(error) };
 
   revalidatePath("/dashboard");
+  // The board and the trip's own page both show this roster.
+  revalidatePath(`/dashboard/trips/${tripId}`);
   return { error: null };
 }
 
@@ -100,7 +108,7 @@ export async function leaveTrip(): Promise<ActionState> {
 
   const { data: activeSignup, error: findError } = await supabase
     .from("signups")
-    .select("id")
+    .select("id, trip_id")
     .eq("user_id", user.id)
     .is("left_at", null)
     .maybeSingle();
@@ -116,5 +124,6 @@ export async function leaveTrip(): Promise<ActionState> {
   if (error) return { error: friendlyError(error) };
 
   revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/trips/${activeSignup.trip_id}`);
   return { error: null };
 }

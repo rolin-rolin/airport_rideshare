@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { TripCard } from "@/components/TripCard";
+import { blockedReason } from "@/lib/trip-capacity";
 import type { Direction, TripWithCounts, TripWithMembers } from "@/lib/types";
 
 const LUGGAGE_OPTIONS = [0, 1, 2, 3, 4, 5];
@@ -9,22 +10,6 @@ const LUGGAGE_OPTIONS = [0, 1, 2, 3, 4, 5];
 const fieldClass =
   "rounded-md border border-border bg-background px-3 py-2 text-body font-body text-foreground outline-none focus:border-primary";
 const labelClass = "flex flex-col gap-1 text-label font-display font-semibold text-foreground/70";
-
-// A trip is unclickable if the rider's declared luggage would blow either
-// the per-person cap or the trip's remaining bag capacity, or the trip is
-// already full. The "full" case is left to the existing status handling in
-// TripCard so its label stays "Full" rather than "Won't fit".
-function blockedReason(trip: TripWithCounts, luggage: number): string | null {
-  if (trip.max_bags_per_person != null && luggage > trip.max_bags_per_person) {
-    return `Limits riders to ${trip.max_bags_per_person} bag${
-      trip.max_bags_per_person === 1 ? "" : "s"
-    } each`;
-  }
-  if (trip.bags_filled + luggage > trip.bag_capacity) {
-    return "Not enough bag space left for your luggage";
-  }
-  return null;
-}
 
 export function TripsBoard({
   trips,

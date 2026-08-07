@@ -12,7 +12,7 @@
 --
 -- Run with: supabase test db --local
 BEGIN;
-SELECT plan(12);
+SELECT plan(16);
 
 insert into auth.users (id, email) values
   ('e1111111-1111-1111-1111-111111111111', 'ctws-user1@nd.edu'),
@@ -220,6 +220,78 @@ SELECT is(
   0,
   'that rejection rolled the trips insert back too, leaving no orphan'
 );
+
+-- ============================================================
+-- Case 9: p_visibility (0013). Trailing-optional like
+-- p_max_bags_per_person, so every existing caller keeps posting to the
+-- public board without passing it.
+-- ============================================================
+
+insert into auth.users (id, email) values
+  ('e8888888-8888-8888-8888-888888888888', 'ctws-user8@nd.edu'),
+  ('e9999999-9999-9999-9999-999999999999', 'ctws-user9@nd.edu');
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "e8888888-8888-8888-8888-888888888888", "role":"authenticated"}';
+
+create temporary table ctws_default_vis as
+select public.create_trip_with_signup(
+  'to_airport', now() + interval '2 hours', 'Dorm', 'Airport',
+  null, 4, 8, 40, null, 1
+) as trip_id;
+
+SELECT is(
+  (select visibility from public.trips where id = (select trip_id from ctws_default_vis)),
+  'public',
+  'omitting p_visibility posts a public trip, unchanged from before 0013'
+);
+
+reset role;
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "e9999999-9999-9999-9999-999999999999", "role":"authenticated"}';
+
+create temporary table ctws_private as
+select public.create_trip_with_signup(
+  'to_airport', now() + interval '2 hours', 'Dorm', 'Airport',
+  null, 4, 8, 40, null, 1, null, 'private'
+) as trip_id;
+
+SELECT is(
+  (select visibility from public.trips where id = (select trip_id from ctws_private)),
+  'private',
+  'p_visibility = private round-trips onto the trip row'
+);
+
+-- The poster is still auto-joined: a private trip is a normal trip that
+-- simply isn't listed, so nothing about the post-and-join pair changes.
+SELECT is(
+  (select count(*) from public.signups
+   where trip_id = (select trip_id from ctws_private)
+     and user_id = 'e9999999-9999-9999-9999-999999999999'
+     and left_at is null)::int,
+  1,
+  'the poster of a private trip is auto-joined exactly as on a public one'
+);
+
+reset role;
+
+-- The check constraint is the backstop against an arbitrary string reaching
+-- the column through the RPC.
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "e8888888-8888-8888-8888-888888888888", "role":"authenticated"}';
+
+SELECT throws_ok(
+  $$ select public.create_trip_with_signup(
+       'to_airport', now() + interval '2 hours', 'Dorm', 'Airport',
+       null, 4, 8, 40, null, 1, null, 'unlisted'
+     ) $$,
+  '23514',
+  'new row for relation "trips" violates check constraint "trips_visibility_check"',
+  'a visibility outside the allowed set is rejected by the check constraint'
+);
+
+reset role;
 
 SELECT * FROM finish();
 ROLLBACK;

@@ -31,10 +31,13 @@ export function TripForm({
     }
   }
 
+  // Land on the new trip's own page rather than the board: a private trip
+  // never appears on the board, so that page is the only place the poster
+  // can get its share link.
   const [hasSubmitted, setHasSubmitted] = useState(false);
   useEffect(() => {
     if (hasSubmitted && !isPending && state.error === null) {
-      router.push("/dashboard");
+      router.push(state.tripId ? `/dashboard/trips/${state.tripId}` : "/dashboard");
     }
   }, [hasSubmitted, isPending, state, router]);
 
@@ -131,6 +134,19 @@ export function TripForm({
         Your bag count
         <input type="number" name="bag_count" min={0} defaultValue={0} required className={fieldClass} />
       </label>
+
+      <div className="rounded-md border border-border p-3">
+        <label className="flex items-start gap-2.5 text-body font-body text-foreground">
+          <input type="checkbox" name="visibility" className="mt-1 accent-primary" />
+          <span>
+            Make this trip private
+            <span className="mt-0.5 block text-label font-body text-foreground/50">
+              It won&apos;t show on the trip board. You&apos;ll get a link to share
+              with the people you want to ride with.
+            </span>
+          </span>
+        </label>
+      </div>
 
       {state.error && <p className="text-body font-body text-red-700">{state.error}</p>}
 

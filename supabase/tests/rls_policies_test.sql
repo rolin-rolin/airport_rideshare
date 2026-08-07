@@ -2,7 +2,8 @@
 -- trips, and signups (post migration 0008, which dropped the last update
 -- policy on trips -- "Active members can mark a trip departed" -- with
 -- nothing replacing it, so authenticated users can no longer UPDATE a trip
--- row directly at all).
+-- row directly at all; and post 0013, which replaced the three
+-- `using (true)` select policies -- see the private-trips section below).
 --
 -- Two distinct failure shapes show up below, and it matters which one a
 -- case expects:
@@ -29,7 +30,7 @@
 --
 -- Run with: supabase test db --local
 BEGIN;
-SELECT plan(27);
+SELECT plan(38);
 
 -- Shared fixtures: two users (A owns a trip + is on its roster, B is a
 -- bystander used to prove cross-user access is denied where expected).
@@ -52,21 +53,23 @@ values
    'a1111111-1111-1111-1111-111111111111', 1);
 
 -- ============================================================
--- profiles: select-only, "to authenticated using (true)"
+-- profiles: select-only, scoped to yourself and your current trip-mates
+-- (0013 -- 0003's "anyone signed in" policy is gone).
 -- ============================================================
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "a2222222-2222-2222-2222-222222222222", "role":"authenticated"}';
 
--- User B sees A's profile as well as their own, which is the actual claim
--- ("not just their own") -- scoped to the two fixture ids so unrelated rows
--- already in the database can't affect the count.
+-- B is not on any trip with A at this point, so only B's own row resolves.
+-- Scoped to the two fixture ids so unrelated rows already in the database
+-- can't affect the count. (The trip-mate case is asserted further down,
+-- once B has actually joined A's trip.)
 SELECT is(
   (select count(*) from public.profiles
    where id in ('a1111111-1111-1111-1111-111111111111',
                 'a2222222-2222-2222-2222-222222222222'))::int,
-  2,
-  'authenticated user can view every profile row, not just their own'
+  1,
+  'authenticated user cannot view the profile of someone they share no trip with'
 );
 
 reset role;
@@ -298,6 +301,22 @@ SELECT lives_ok(
 
 reset role;
 
+-- The other half of the profiles policy: B just joined A's trip, so A's
+-- email now resolves where it didn't at the top of this file. This is what
+-- keeps the roster rendering (DESIGN.md §4.3) after 0013 narrowed profiles.
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "a2222222-2222-2222-2222-222222222222", "role":"authenticated"}';
+
+SELECT is(
+  (select count(*) from public.profiles
+   where id in ('a1111111-1111-1111-1111-111111111111',
+                'a2222222-2222-2222-2222-222222222222'))::int,
+  2,
+  'a user can view the profile of someone on the same trip'
+);
+
+reset role;
+
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "a2222222-2222-2222-2222-222222222222", "role":"authenticated"}';
 
@@ -401,6 +420,152 @@ SELECT throws_ok(
   '42501',
   'permission denied for table signups',
   'anon cannot leave a trip (no update grant on signups)'
+);
+
+reset role;
+
+-- ============================================================
+-- Private trips (0013). "Private" means undiscoverable, not
+-- unjoinable: the trip row is hidden from anyone not already connected to
+-- it, and holding the (unguessable) UUID is what entitles a link-holder to
+-- see it -- which they do through get_trip_for_view, not a direct select.
+--
+-- The join itself is deliberately unchanged: the signups insert policy
+-- never consults visibility, because you cannot insert a signup without
+-- already knowing the trip id. That's asserted below, and it's why
+-- signup_capacity_test.sql needed no edits for this feature.
+--
+-- Users C (creator/member of the private trip) and D (a link-holder who
+-- joins it) are separate from A and B because signups_one_active_per_user
+-- allows each user only one active signup, and A and B are both already on
+-- the public fixture trip.
+-- ============================================================
+
+insert into auth.users (id, email) values
+  ('a3333333-3333-3333-3333-333333333333', 'rls-userC@nd.edu'),
+  ('a4444444-4444-4444-4444-444444444444', 'rls-userD@nd.edu');
+
+insert into public.trips
+  (id, direction, departure_time, pickup_location, dropoff_location,
+   seat_capacity, bag_capacity, created_by, status, visibility)
+values
+  ('f1111111-0000-0000-0000-000000000005', 'to_airport',
+   now() + interval '4 hours', 'Dorm', 'Airport', 4, 4,
+   'a3333333-3333-3333-3333-333333333333', 'open', 'private');
+
+insert into public.signups (id, trip_id, user_id, bag_count)
+values
+  ('f2222222-0000-0000-0000-000000000005',
+   'f1111111-0000-0000-0000-000000000005',
+   'a3333333-3333-3333-3333-333333333333', 1);
+
+-- B is signed in and unrelated to the private trip: it must not appear in a
+-- plain select, which is the query a curious student would run against
+-- PostgREST with the anon key that ships in the browser bundle.
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "a2222222-2222-2222-2222-222222222222", "role":"authenticated"}';
+
+SELECT is(
+  (select count(*) from public.trips
+   where id = 'f1111111-0000-0000-0000-000000000005')::int,
+  0,
+  'a private trip is invisible to an authenticated user with no connection to it'
+);
+
+-- Its roster is hidden by the same rule, since the signups policy inherits
+-- the trip's visibility rather than restating it.
+SELECT is(
+  (select count(*) from public.signups
+   where trip_id = 'f1111111-0000-0000-0000-000000000005')::int,
+  0,
+  'a private trip''s signups are hidden from the same user'
+);
+
+-- The public fixture trip is untouched by any of this.
+SELECT is(
+  (select count(*) from public.trips
+   where id = 'f1111111-0000-0000-0000-000000000001')::int,
+  1,
+  'public trips stay visible to every authenticated user'
+);
+
+reset role;
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "a3333333-3333-3333-3333-333333333333", "role":"authenticated"}';
+
+SELECT is(
+  (select count(*) from public.trips
+   where id = 'f1111111-0000-0000-0000-000000000005')::int,
+  1,
+  'the creator can see their own private trip'
+);
+
+reset role;
+
+-- get_trip_for_view is the link-resolution path: security definer, so it
+-- answers for a private trip the caller could not select directly. The UUID
+-- is the credential.
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "a2222222-2222-2222-2222-222222222222", "role":"authenticated"}';
+
+SELECT is(
+  (select public.get_trip_for_view('f1111111-0000-0000-0000-000000000005')
+          -> 'trip' ->> 'id'),
+  'f1111111-0000-0000-0000-000000000005',
+  'a link-holder can resolve a private trip they cannot select directly'
+);
+
+-- Link-holders see who is already aboard before committing a seat.
+SELECT is(
+  jsonb_array_length(
+    public.get_trip_for_view('f1111111-0000-0000-0000-000000000005') -> 'signups'
+  ),
+  1,
+  'get_trip_for_view returns the roster alongside the trip'
+);
+
+SELECT ok(
+  public.get_trip_for_view('f1111111-0000-0000-0000-0000000000ff') is null,
+  'get_trip_for_view returns null for an id that matches no trip'
+);
+
+reset role;
+
+-- Same shape as create_trip_with_signup: EXECUTE defaults to PUBLIC, so the
+-- function's own auth.uid() guard is what actually holds the door.
+set local role anon;
+reset request.jwt.claims;
+
+SELECT throws_ok(
+  $$ select public.get_trip_for_view('f1111111-0000-0000-0000-000000000005') $$,
+  'P0001',
+  'Not authenticated',
+  'anon reaching get_trip_for_view is stopped by its own auth.uid() guard'
+);
+
+reset role;
+
+-- The join path itself: D holds the link and joins with the ordinary
+-- signups insert -- the same statement joinTrip issues for a public trip,
+-- against the same capacity trigger. No visibility check anywhere in it.
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "a4444444-4444-4444-4444-444444444444", "role":"authenticated"}';
+
+SELECT lives_ok(
+  $$ insert into public.signups (id, trip_id, user_id, bag_count)
+     values ('f2222222-0000-0000-0000-000000000006',
+             'f1111111-0000-0000-0000-000000000005',
+             'a4444444-4444-4444-4444-444444444444', 1) $$,
+  'a link-holder joins a private trip through the ordinary signups insert'
+);
+
+-- And having joined, the trip resolves for them by plain select from then on.
+SELECT is(
+  (select count(*) from public.trips
+   where id = 'f1111111-0000-0000-0000-000000000005')::int,
+  1,
+  'a member can select the private trip directly once they have joined'
 );
 
 reset role;

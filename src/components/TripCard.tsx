@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Direction, TripWithCounts } from "@/lib/types";
 import { RouteDisplay } from "@/components/RouteDisplay";
 import { CapacityRow } from "@/components/CapacityRow";
@@ -30,10 +31,20 @@ export function TripCard({
 }) {
   return (
     <div
-      className={`rounded-xl border border-border bg-background p-5 ${
+      className={`relative rounded-xl border border-border bg-background p-5 transition-colors hover:border-primary/40 ${
         blockedReason && !isMine ? "opacity-50" : ""
       }`}
     >
+      {/* Stretched link: covers the card so the whole thing opens the trip
+          detail page, without wrapping the join form in an anchor (nesting
+          a form inside a link would hijack clicks on the bag input). The
+          action area below sits above it via z-10. */}
+      <Link
+        href={`/dashboard/trips/${trip.id}`}
+        className="absolute inset-0 rounded-xl"
+        aria-label={`View trip from ${trip.pickup_location} to ${trip.dropoff_location}`}
+      />
+
       <p className="text-label font-body text-foreground/50">
         {DIRECTION_LABEL[direction]}
       </p>
@@ -68,7 +79,7 @@ export function TripCard({
         </p>
       )}
 
-      <div className="mt-1.5 flex items-center justify-between gap-3">
+      <div className="relative z-10 mt-1.5 flex items-center justify-between gap-3">
         <CapacityRow
           seatsFilled={trip.seats_filled}
           seatCapacity={trip.seat_capacity}
@@ -88,7 +99,7 @@ export function TripCard({
             Won&apos;t fit
           </span>
         ) : canJoin ? (
-          <JoinTripButton tripId={trip.id} />
+          <JoinTripButton trip={trip} />
         ) : trip.status === "full" ? (
           <span className="shrink-0 text-label font-display font-semibold text-foreground/40">
             Full

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
+import { getMyActiveTripId } from "@/lib/trips";
 import { GroupStatusBar } from "@/components/GroupStatusBar";
 import { LeaveTripStatusProvider } from "@/components/LeaveTripStatus";
 import { TripsRealtimeListener } from "@/components/TripsRealtimeListener";
@@ -18,9 +19,11 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
+  const activeTripId = await getMyActiveTripId();
+
   return (
     <div className="flex flex-1 flex-col">
-      <TripsRealtimeListener />
+      <TripsRealtimeListener activeTripId={activeTripId} />
       <LeaveTripStatusProvider>
         <GroupStatusBar />
       </LeaveTripStatusProvider>

@@ -152,11 +152,11 @@ export async function getTripForView(tripId: string): Promise<TripWithMembers | 
   return { ...withCounts(trip, signups), members: toMembers(signups) };
 }
 
-// The current user's active trip (if any), with its full roster — powers
-// the persistent group-status indicator required by DESIGN.md §4.3 ("shows
-// trip details and who else is in it") and enforces "one active group at a
-// time" in the UI (the DB's unique index is the actual source of truth).
-export async function getMyActiveTrip(): Promise<TripWithMembers | null> {
+// The current user's active trip id, if any -- the same lookup
+// getMyActiveTrip does, without paying for the full roster fetch. Used by
+// the dashboard layout to know which realtime broadcast topic (0014) to
+// subscribe to.
+export async function getMyActiveTripId(): Promise<string | null> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -172,7 +172,15 @@ export async function getMyActiveTrip(): Promise<TripWithMembers | null> {
     .maybeSingle();
 
   if (mySignupError) throw mySignupError;
-  if (!mySignup) return null;
+  return mySignup?.trip_id ?? null;
+}
 
-  return getTripWithMembers(mySignup.trip_id);
+// The current user's active trip (if any), with its full roster — powers
+// the persistent group-status indicator required by DESIGN.md §4.3 ("shows
+// trip details and who else is in it") and enforces "one active group at a
+// time" in the UI (the DB's unique index is the actual source of truth).
+export async function getMyActiveTrip(): Promise<TripWithMembers | null> {
+  const tripId = await getMyActiveTripId();
+  if (!tripId) return null;
+  return getTripWithMembers(tripId);
 }

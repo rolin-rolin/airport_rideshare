@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 
@@ -17,16 +17,18 @@ const REALTIME_REFRESH_EXCLUDED_PATHS = ["/dashboard/new"];
 // Keeps an open dashboard tab in sync with changes to trips/signups that
 // didn't originate from this tab's own server actions -- most notably the
 // trip-cleanup cron job (0006/0007), which runs outside app code and so has
-// no way to call revalidatePath. Subscribes to Postgres changes (enabled via
-// migration 0012's `alter publication supabase_realtime add table ...`) and
-// asks the router to re-fetch the current route's Server Components, the
-// same refresh a server action's revalidatePath already triggers.
+// no way to call revalidatePath. Listens via Realtime Broadcast (0014):
+// DB triggers ping a "board-public" topic on any public-trip activity and a
+// per-trip "trip:<id>" topic for the caller's own active trip, and this
+// component just asks the router to re-fetch the current route's Server
+// Components on any ping -- the same refresh a server action's
+// revalidatePath already triggers. Pings carry no row data; the real data
+// always comes back through the normal RLS-checked server fetch.
 //
-// RLS still gates what this subscription actually receives -- it can only
-// ever hear about rows the signed-in user's own SELECT policies would let
-// them read (0002, granted via 0009), so no data is exposed here that
-// getBoardTrips/getMyActiveTrip wouldn't already return.
-export function TripsRealtimeListener() {
+// Delivery is itself RLS-gated per topic (0014, mirroring 0013's read
+// policies) -- a tab with no reason to hear about a private trip's activity
+// never receives a ping for it in the first place.
+export function TripsRealtimeListener({ activeTripId }: { activeTripId: string | null }) {
   const router = useRouter();
   const pathname = usePathname();
   const pathnameRef = useRef(pathname);
@@ -35,32 +37,46 @@ export function TripsRealtimeListener() {
     pathnameRef.current = pathname;
   }, [pathname]);
 
+  // Coalesce bursts of change events (e.g. a cron sweep expiring several
+  // trips at once) into a single refresh rather than one per row. Shared
+  // across both channels below so a board ping and a trip ping arriving
+  // together still only trigger one refresh.
+  const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scheduleRefresh = useCallback(() => {
+    if (refreshTimeoutRef.current) return;
+    refreshTimeoutRef.current = setTimeout(() => {
+      refreshTimeoutRef.current = null;
+      if (REALTIME_REFRESH_EXCLUDED_PATHS.includes(pathnameRef.current)) return;
+      router.refresh();
+    }, 300);
+  }, [router]);
+
   useEffect(() => {
     const supabase = createClient();
-
-    // Coalesce bursts of change events (e.g. a cron sweep expiring several
-    // trips at once) into a single refresh rather than one per row.
-    let refreshTimeout: ReturnType<typeof setTimeout> | null = null;
-    const scheduleRefresh = () => {
-      if (refreshTimeout) return;
-      refreshTimeout = setTimeout(() => {
-        refreshTimeout = null;
-        if (REALTIME_REFRESH_EXCLUDED_PATHS.includes(pathnameRef.current)) return;
-        router.refresh();
-      }, 300);
-    };
-
     const channel = supabase
-      .channel("trips-and-signups-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "trips" }, scheduleRefresh)
-      .on("postgres_changes", { event: "*", schema: "public", table: "signups" }, scheduleRefresh)
+      .channel("board-public", { config: { private: true } })
+      .on("broadcast", { event: "change" }, scheduleRefresh)
       .subscribe();
 
     return () => {
-      if (refreshTimeout) clearTimeout(refreshTimeout);
+      if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [scheduleRefresh]);
+
+  useEffect(() => {
+    if (!activeTripId) return;
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`trip:${activeTripId}`, { config: { private: true } })
+      .on("broadcast", { event: "change" }, scheduleRefresh)
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeTripId, scheduleRefresh]);
 
   return null;
 }

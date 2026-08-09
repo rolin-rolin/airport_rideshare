@@ -19,6 +19,12 @@ export function TripForm({
   const [vehicleTypeId, setVehicleTypeId] = useState(vehicleTypes[0]?.id ?? "");
   const [seatCapacity, setSeatCapacity] = useState(vehicleTypes[0]?.default_seat_capacity ?? 0);
   const [bagCapacity, setBagCapacity] = useState(vehicleTypes[0]?.default_bag_capacity ?? 0);
+  // datetime-local's raw value has no timezone, so it must be converted to
+  // an unambiguous ISO string here, in the browser, where `new Date` resolves
+  // it against the user's own timezone. Doing this conversion in the server
+  // action instead would resolve it against the server's timezone, silently
+  // storing the wrong instant for any user not in that zone.
+  const [departureTimeIso, setDepartureTimeIso] = useState("");
 
   function handleVehicleTypeChange(id: string) {
     setVehicleTypeId(id);
@@ -36,9 +42,17 @@ export function TripForm({
     <form action={formAction} className="flex flex-col gap-4">
       <input type="hidden" name="direction" value={direction} />
 
+      <input type="hidden" name="departure_time" value={departureTimeIso} />
       <label className={labelClass}>
         Departure time
-        <input type="datetime-local" name="departure_time" required className={fieldClass} />
+        <input
+          type="datetime-local"
+          required
+          className={fieldClass}
+          onChange={(e) =>
+            setDepartureTimeIso(e.target.value ? new Date(e.target.value).toISOString() : "")
+          }
+        />
       </label>
 
       <label className={labelClass}>

@@ -3,18 +3,12 @@ import type { Direction, TripWithCounts } from "@/lib/types";
 import { RouteDisplay } from "@/components/RouteDisplay";
 import { CapacityRow } from "@/components/CapacityRow";
 import { JoinTripButton } from "@/components/JoinTripButton";
+import { formatTripTime } from "@/components/FormattedTripTime";
 
 const DIRECTION_LABEL: Record<Direction, string> = {
   to_airport: "Leaves campus at",
   from_airport: "Leaves airport at",
 };
-
-function formatTime(isoTime: string): string {
-  return new Date(isoTime).toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
 
 export function TripCard({
   trip,
@@ -59,7 +53,7 @@ export function TripCard({
 
       <div className="mt-1 flex items-baseline justify-between gap-3">
         <span className="text-time font-display font-bold text-foreground">
-          {formatTime(trip.departure_time)}
+          {formatTripTime(trip.departure_time)}
         </span>
         {trip.cost_per_person != null && (
           <span className="text-price font-display font-semibold text-live">

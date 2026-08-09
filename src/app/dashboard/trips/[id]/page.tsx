@@ -6,21 +6,12 @@ import { RouteDisplay } from "@/components/RouteDisplay";
 import { CapacityRow } from "@/components/CapacityRow";
 import { JoinTripButton } from "@/components/JoinTripButton";
 import { CopyTripLinkButton } from "@/components/CopyTripLinkButton";
+import { FormattedTripDateTime } from "@/components/FormattedTripTime";
 
 const DIRECTION_LABEL = {
   to_airport: "Leaves campus at",
   from_airport: "Leaves airport at",
 } as const;
-
-function formatDateTime(isoTime: string): string {
-  return new Date(isoTime).toLocaleString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
 
 // The landing page for a shared trip link, and the detail view for any trip
 // on the board. One page for both visibilities — a private trip differs
@@ -67,7 +58,7 @@ export default async function TripDetailPage({
               {DIRECTION_LABEL[trip.direction]}
             </p>
             <p className="mt-1 text-time font-display font-bold text-foreground">
-              {formatDateTime(trip.departure_time)}
+              <FormattedTripDateTime iso={trip.departure_time} />
             </p>
           </div>
           {trip.visibility === "private" && (

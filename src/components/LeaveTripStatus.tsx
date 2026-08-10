@@ -1,11 +1,19 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useState } from "react";
+import { Modal } from "@/components/Modal";
+import type { ContactMethod } from "@/lib/types";
 
-type LeftInfo = { groupmeLink: string | null };
+type LeftInfo = { contactMethod: ContactMethod | null; contactValue: string | null };
 
 type LeaveTripStatusContextValue = {
-  notifyLeft: (groupmeLink: string | null) => void;
+  notifyLeft: (contactMethod: ContactMethod | null, contactValue: string | null) => void;
+};
+
+const CONTACT_HREF: Record<ContactMethod, (value: string) => string> = {
+  phone: (value) => `tel:${value}`,
+  email: (value) => `mailto:${value}`,
+  link: (value) => value,
 };
 
 const LeaveTripStatusContext = createContext<LeaveTripStatusContextValue | null>(null);
@@ -19,8 +27,8 @@ export function useLeaveTripStatus(): LeaveTripStatusContextValue {
 }
 
 // Wraps GroupStatusBar (an async Server Component) so the "you've left this
-// trip" confirmation survives the automatic route refresh Next.js triggers
-// once the `leaveTrip` server action resolves (see dashboard/actions.ts's
+// trip" panel survives the automatic route refresh Next.js triggers once the
+// `leaveTrip` server action resolves (see dashboard/actions.ts's
 // revalidatePath("/dashboard")). That refresh re-runs getMyActiveTrip(),
 // which now returns null, so GroupStatusBar renders nothing. If the
 // confirmation's state lived inside GroupStatusBar's own subtree (e.g. in
@@ -32,51 +40,47 @@ export function useLeaveTripStatus(): LeaveTripStatusContextValue {
 // re-rendered GroupStatusBar output — gets swapped out underneath it), so
 // state set here isn't wiped out. LeaveTripButton reports "I just left" up
 // to this Provider via context; the Provider then renders the confirmation
-// itself instead of `children`, independent of whether GroupStatusBar still
-// renders anything.
+// panel over `children` (rather than replacing it — this is the second of
+// two panels the leave flow shows: LeaveTripButton's own confirm-you-want-
+// to-leave panel comes first).
 export function LeaveTripStatusProvider({ children }: { children: React.ReactNode }) {
   const [leftInfo, setLeftInfo] = useState<LeftInfo | null>(null);
 
-  const notifyLeft = useCallback((groupmeLink: string | null) => {
-    setLeftInfo({ groupmeLink });
+  const notifyLeft = useCallback((contactMethod: ContactMethod | null, contactValue: string | null) => {
+    setLeftInfo({ contactMethod, contactValue });
   }, []);
-
-  // Auto-dismiss after a while so the bar settles back into reflecting "no
-  // active trip" (i.e. whatever `children` now is — nothing, since
-  // GroupStatusBar will have already refreshed to null) without requiring
-  // the user to click anything.
-  useEffect(() => {
-    if (!leftInfo) return;
-    const timer = setTimeout(() => setLeftInfo(null), 8000);
-    return () => clearTimeout(timer);
-  }, [leftInfo]);
 
   return (
     <LeaveTripStatusContext.Provider value={{ notifyLeft }}>
-      {leftInfo ? (
-        <div className="border-b border-border bg-primary/[.06]">
-          <div className="mx-auto max-w-2xl px-4 py-3">
-            <p className="text-body font-body text-foreground/70">
-              You&apos;ve left this trip. Don&apos;t forget to let the group know in
-              GroupMe.
-              {leftInfo.groupmeLink && (
-                <>
-                  {" "}
-                  <a
-                    href={leftInfo.groupmeLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-semibold text-primary underline"
-                  >
-                    Open GroupMe
-                  </a>
-                </>
-              )}
+      {children}
+      {leftInfo && (
+        <Modal>
+          <p className="text-body font-body text-foreground">
+            You&apos;ve left this trip. Don&apos;t forget to let the group
+            know — you were part of their plans.
+          </p>
+          {leftInfo.contactMethod && leftInfo.contactValue && (
+            <p className="mt-2">
+              <a
+                href={CONTACT_HREF[leftInfo.contactMethod](leftInfo.contactValue)}
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold text-primary underline"
+              >
+                Reach the group
+              </a>
             </p>
+          )}
+          <div className="mt-4 flex justify-end">
+            <button
+              type="button"
+              onClick={() => setLeftInfo(null)}
+              className="rounded-full bg-primary px-4 py-1.5 text-label font-display font-semibold text-background transition-colors hover:bg-primary/90"
+            >
+              Got it
+            </button>
           </div>
-        </div>
-      ) : (
-        children
+        </Modal>
       )}
     </LeaveTripStatusContext.Provider>
   );

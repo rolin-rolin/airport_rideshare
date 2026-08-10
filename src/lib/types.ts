@@ -7,6 +7,11 @@ export type TripStatus = "open" | "full" | "expired" | "abandoned";
 // link (migration 0013). Affects discovery only — joining is identical.
 export type TripVisibility = "public" | "private";
 
+// How trip-mates coordinate off-platform. Nullable together — a trip either
+// has one of these or none (DESIGN.md-style single-contact model, replacing
+// the old always-a-GroupMe-link assumption).
+export type ContactMethod = "phone" | "link" | "email";
+
 export interface VehicleType {
   id: string;
   name: string;
@@ -25,7 +30,13 @@ export interface Trip {
   bag_capacity: number;
   max_bags_per_person: number | null;
   estimated_total_cost: number | null;
-  groupme_link: string | null;
+  // Both null for a trip with no contact info on file. When set for the
+  // caller, both are non-null — see trips_contact_consistency. get_trip_for
+  // _view (migration 0016) nulls these out for any viewer who isn't an
+  // active member or the poster, so a browsing/not-yet-joined viewer never
+  // receives them regardless of what's actually on the row.
+  contact_method: ContactMethod | null;
+  contact_value: string | null;
   status: TripStatus;
   visibility: TripVisibility;
   created_by: string;

@@ -3,8 +3,17 @@
 import { useState, useTransition } from "react";
 import { leaveTrip } from "@/app/dashboard/actions";
 import { useLeaveTripStatus } from "@/components/LeaveTripStatus";
+import { Modal } from "@/components/Modal";
+import type { ContactMethod } from "@/lib/types";
 
-export function LeaveTripButton({ groupmeLink }: { groupmeLink: string | null }) {
+export function LeaveTripButton({
+  contactMethod,
+  contactValue,
+}: {
+  contactMethod: ContactMethod | null;
+  contactValue: string | null;
+}) {
+  const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const { notifyLeft } = useLeaveTripStatus();
@@ -17,7 +26,7 @@ export function LeaveTripButton({ groupmeLink }: { groupmeLink: string | null })
   // sets state on LeaveTripStatusProvider, a component that stays mounted
   // regardless of what happens to this button, so it doesn't matter
   // whether this component is still alive by the time the await resolves.
-  const handleLeave = () => {
+  const handleConfirmLeave = () => {
     startTransition(async () => {
       const result = await leaveTrip();
       if (result.error) {
@@ -25,21 +34,51 @@ export function LeaveTripButton({ groupmeLink }: { groupmeLink: string | null })
         return;
       }
       setError(null);
-      notifyLeft(groupmeLink);
+      setConfirming(false);
+      notifyLeft(contactMethod, contactValue);
     });
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <>
       <button
         type="button"
-        disabled={isPending}
-        onClick={handleLeave}
-        className="rounded-full border border-border px-4 py-1.5 text-label font-display font-semibold text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
+        onClick={() => setConfirming(true)}
+        className="rounded-full border border-border px-4 py-1.5 text-label font-display font-semibold text-foreground transition-colors hover:bg-foreground/5"
       >
-        {isPending ? "Leaving..." : "Leave trip"}
+        Leave trip
       </button>
-      {error && <p className="text-label font-body text-red-700">{error}</p>}
-    </div>
+
+      {confirming && (
+        <Modal>
+          <p className="text-body font-body text-foreground">
+            Leave this trip? You&apos;ll lose your spot and it may open up to
+            someone else.
+          </p>
+          {error && <p className="mt-2 text-label font-body text-red-700">{error}</p>}
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => {
+                setConfirming(false);
+                setError(null);
+              }}
+              className="rounded-full border border-border px-4 py-1.5 text-label font-display font-semibold text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={handleConfirmLeave}
+              className="rounded-full bg-primary px-4 py-1.5 text-label font-display font-semibold text-background transition-colors hover:bg-primary/90 disabled:opacity-50"
+            >
+              {isPending ? "Leaving..." : "Leave trip"}
+            </button>
+          </div>
+        </Modal>
+      )}
+    </>
   );
 }

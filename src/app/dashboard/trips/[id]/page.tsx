@@ -6,11 +6,23 @@ import { RouteDisplay } from "@/components/RouteDisplay";
 import { CapacityRow } from "@/components/CapacityRow";
 import { JoinTripButton } from "@/components/JoinTripButton";
 import { CopyTripLinkButton } from "@/components/CopyTripLinkButton";
-import { FormattedTripDateTime } from "@/components/FormattedTripTime";
+import { FormattedTripDate, FormattedTripTime } from "@/components/FormattedTripTime";
 
 const DIRECTION_LABEL = {
   to_airport: "Leaves campus at",
   from_airport: "Leaves airport at",
+} as const;
+
+const CONTACT_HREF = {
+  phone: (value: string) => `tel:${value}`,
+  email: (value: string) => `mailto:${value}`,
+  link: (value: string) => value,
+} as const;
+
+const CONTACT_VERB = {
+  phone: "Text",
+  email: "Email",
+  link: "Join",
 } as const;
 
 // The landing page for a shared trip link, and the detail view for any trip
@@ -58,7 +70,8 @@ export default async function TripDetailPage({
               {DIRECTION_LABEL[trip.direction]}
             </p>
             <p className="mt-1 text-time font-display font-bold text-foreground">
-              <FormattedTripDateTime iso={trip.departure_time} />
+              <FormattedTripDate iso={trip.departure_time} /> @{" "}
+              <FormattedTripTime iso={trip.departure_time} />
             </p>
           </div>
           {trip.visibility === "private" && (
@@ -118,11 +131,25 @@ export default async function TripDetailPage({
                 <span className="text-foreground/50">
                   {" "}
                   &middot; {m.bag_count} bag{m.bag_count === 1 ? "" : "s"}
-                  {m.user_id === trip.created_by && " · posted this trip"}
                 </span>
               </li>
             ))}
           </ul>
+        )}
+
+        {isMember && trip.contact_method && trip.contact_value && (
+          <p className="mt-3 border-t border-border pt-3 text-body font-body text-foreground">
+            {CONTACT_VERB[trip.contact_method]}{" "}
+            <a
+              href={CONTACT_HREF[trip.contact_method](trip.contact_value)}
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-primary underline"
+            >
+              {trip.contact_value}
+            </a>{" "}
+            to coordinate
+          </p>
         )}
       </div>
 

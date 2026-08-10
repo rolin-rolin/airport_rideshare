@@ -11,20 +11,20 @@ export function formatTripTime(iso: string): string {
   });
 }
 
-export function formatTripDateTime(iso: string): string {
-  return new Date(iso).toLocaleString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+// "<Month>, <Date>", e.g. "Aug, 15" — Intl has no built-in pattern for this
+// exact pairing (its comma placement is for the year), so the two parts are
+// formatted separately and joined by hand.
+export function formatTripDate(iso: string): string {
+  const d = new Date(iso);
+  const month = d.toLocaleDateString("en-US", { month: "short" });
+  const day = d.toLocaleDateString("en-US", { day: "numeric" });
+  return `${month}, ${day}`;
 }
 
 export function FormattedTripTime({ iso }: { iso: string }) {
   return <>{formatTripTime(iso)}</>;
 }
 
-export function FormattedTripDateTime({ iso }: { iso: string }) {
-  return <>{formatTripDateTime(iso)}</>;
+export function FormattedTripDate({ iso }: { iso: string }) {
+  return <>{formatTripDate(iso)}</>;
 }

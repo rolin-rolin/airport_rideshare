@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
-import type { Direction } from "@/lib/types";
+import type { ContactMethod, Direction } from "@/lib/types";
+
+const CONTACT_METHODS: ContactMethod[] = ["phone", "link", "email"];
 import { friendlyError } from "@/lib/friendly-error";
 
 type ActionState = { error: string | null };
@@ -36,17 +38,30 @@ export async function createTrip(
   const seatCapacity = Number(formData.get("seat_capacity"));
   const bagCapacity = Number(formData.get("bag_capacity"));
   const estimatedTotalCostRaw = String(formData.get("estimated_total_cost") ?? "").trim();
-  const groupmeLink = String(formData.get("groupme_link") ?? "").trim();
+  const contactMethodRaw = String(formData.get("contact_method") ?? "").trim();
+  const contactValue = String(formData.get("contact_value") ?? "").trim();
   const bagCount = Number(formData.get("bag_count") ?? 0);
   const maxBagsPerPersonRaw = String(formData.get("max_bags_per_person") ?? "").trim();
   // Unchecked checkboxes aren't submitted at all, so presence is the value.
   const visibility = formData.get("visibility") ? "private" : "public";
 
-  if (!pickupLocation || !dropoffLocation || !vehicleTypeId || !departureTime) {
+  if (
+    !pickupLocation ||
+    !dropoffLocation ||
+    !vehicleTypeId ||
+    !departureTime ||
+    !estimatedTotalCostRaw ||
+    !contactMethodRaw ||
+    !contactValue ||
+    !formData.get("bag_count")
+  ) {
     return { error: "Please fill in all required fields." };
   }
   if (!Number.isFinite(seatCapacity) || !Number.isFinite(bagCapacity)) {
     return { error: "Seat and bag capacity must be numbers." };
+  }
+  if (!CONTACT_METHODS.includes(contactMethodRaw as ContactMethod)) {
+    return { error: "Invalid contact method." };
   }
 
   const { data: tripId, error } = await supabase.rpc("create_trip_with_signup", {
@@ -58,7 +73,8 @@ export async function createTrip(
     p_seat_capacity: seatCapacity,
     p_bag_capacity: bagCapacity,
     p_estimated_total_cost: estimatedTotalCostRaw ? Number(estimatedTotalCostRaw) : null,
-    p_groupme_link: groupmeLink || null,
+    p_contact_method: contactMethodRaw || null,
+    p_contact_value: contactMethodRaw ? contactValue : null,
     p_bag_count: bagCount,
     p_max_bags_per_person: maxBagsPerPersonRaw ? Number(maxBagsPerPersonRaw) : null,
     p_visibility: visibility,

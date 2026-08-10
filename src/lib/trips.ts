@@ -88,7 +88,15 @@ export async function getBoardTrips(direction: Direction): Promise<TripWithCount
 
   if (signupsError) throw signupsError;
 
-  return trips.map((trip) => withCounts(trip, signups as unknown as SignupRow[]));
+  // The board never shows contact info (only a member/the poster is
+  // entitled to see it — see get_trip_for_view, migration 0016), so it's
+  // stripped here rather than merely left unrendered, keeping it out of the
+  // RSC payload shipped to every browsing viewer's client.
+  return trips.map((trip) => ({
+    ...withCounts(trip, signups as unknown as SignupRow[]),
+    contact_method: null,
+    contact_value: null,
+  }));
 }
 
 // Exported for unit testing; not otherwise part of the public API surface.

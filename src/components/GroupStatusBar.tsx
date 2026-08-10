@@ -1,8 +1,9 @@
+import Link from "next/link";
 import { getMyActiveTrip } from "@/lib/trips";
 import { CapacityRow } from "@/components/CapacityRow";
 import { LeaveTripButton } from "@/components/LeaveTripButton";
 import { GroupStatusFlash } from "@/components/GroupStatusFlash";
-import { FormattedTripTime } from "@/components/FormattedTripTime";
+import { FormattedTripDate, FormattedTripTime } from "@/components/FormattedTripTime";
 
 export async function GroupStatusBar() {
   const trip = await getMyActiveTrip();
@@ -17,7 +18,8 @@ export async function GroupStatusBar() {
       <div className="mx-auto flex max-w-2xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-label font-display font-semibold uppercase tracking-wide text-primary">
-            Your trip &middot; <FormattedTripTime iso={trip.departure_time} />
+            Your trip &middot; <FormattedTripDate iso={trip.departure_time} /> @{" "}
+            <FormattedTripTime iso={trip.departure_time} />
           </p>
           <p className="mt-0.5 text-body font-body text-foreground">
             {trip.pickup_location} &rarr; {trip.dropoff_location}
@@ -37,7 +39,13 @@ export async function GroupStatusBar() {
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <LeaveTripButton groupmeLink={trip.groupme_link} />
+          <Link
+            href={`/dashboard/trips/${trip.id}`}
+            className="rounded-full border border-border px-4 py-1.5 text-label font-display font-semibold text-foreground transition-colors hover:bg-foreground/5"
+          >
+            Your trip
+          </Link>
+          <LeaveTripButton contactMethod={trip.contact_method} contactValue={trip.contact_value} />
         </div>
       </div>
     </GroupStatusFlash>

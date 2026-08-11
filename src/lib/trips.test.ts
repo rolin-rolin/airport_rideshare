@@ -54,29 +54,6 @@ describe("withCounts", () => {
     expect(result.bags_filled).toBe(3);
   });
 
-  it("computes cost_per_person from estimated_total_cost / seats_filled", () => {
-    const trip = makeTrip({ estimated_total_cost: 40 });
-    const signups = [
-      makeSignup({ id: "s1", trip_id: "trip-1" }),
-      makeSignup({ id: "s2", trip_id: "trip-1" }),
-    ];
-
-    expect(withCounts(trip, signups).cost_per_person).toBe(20);
-  });
-
-  it("cost_per_person is null when estimated_total_cost is null", () => {
-    const trip = makeTrip({ estimated_total_cost: null });
-    const signups = [makeSignup({ id: "s1", trip_id: "trip-1" })];
-
-    expect(withCounts(trip, signups).cost_per_person).toBeNull();
-  });
-
-  it("cost_per_person is null when seats_filled is zero (divide-by-zero guard)", () => {
-    const trip = makeTrip({ estimated_total_cost: 40 });
-
-    expect(withCounts(trip, []).cost_per_person).toBeNull();
-  });
-
   it("falls back vehicle_type_name to null when vehicle_types is null", () => {
     const trip = makeTrip({ vehicle_types: null });
 

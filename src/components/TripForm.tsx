@@ -46,13 +46,16 @@ export function TripForm({
   // it against the user's own timezone. Doing this conversion in the server
   // action instead would resolve it against the server's timezone, silently
   // storing the wrong instant for any user not in that zone.
-  const [departureTimeIso, setDepartureTimeIso] = useState("");
+  const [departureTimeLocal, setDepartureTimeLocal] = useState("");
+  const departureTimeIso = departureTimeLocal ? new Date(departureTimeLocal).toISOString() : "";
   const [pickupLocation, setPickupLocation] = useState("");
   const [dropoffLocation, setDropoffLocation] = useState("");
   const [estimatedTotalCost, setEstimatedTotalCost] = useState("");
   const [contactMethod, setContactMethod] = useState<ContactMethod | "">("");
   const [contactValue, setContactValue] = useState("");
   const [bagCount, setBagCount] = useState("0");
+  const [maxBagsPerPerson, setMaxBagsPerPerson] = useState("");
+  const [isPrivate, setIsPrivate] = useState(false);
   const [invalidFields, setInvalidFields] = useState<Set<FieldName>>(new Set());
 
   function handleVehicleTypeChange(id: string) {
@@ -98,9 +101,8 @@ export function TripForm({
         <input
           type="datetime-local"
           className={fieldClassFor("departure_time")}
-          onChange={(e) =>
-            setDepartureTimeIso(e.target.value ? new Date(e.target.value).toISOString() : "")
-          }
+          value={departureTimeLocal}
+          onChange={(e) => setDepartureTimeLocal(e.target.value)}
         />
       </label>
 
@@ -177,6 +179,8 @@ export function TripForm({
           name="max_bags_per_person"
           min={0}
           placeholder="No limit"
+          value={maxBagsPerPerson}
+          onChange={(e) => setMaxBagsPerPerson(e.target.value)}
           className={fieldClass}
         />
       </label>
@@ -245,7 +249,13 @@ export function TripForm({
 
       <div className="rounded-md border border-border p-3">
         <label className="flex items-start gap-2.5 text-body font-body text-foreground">
-          <input type="checkbox" name="visibility" className="mt-1 accent-primary" />
+          <input
+            type="checkbox"
+            name="visibility"
+            checked={isPrivate}
+            onChange={(e) => setIsPrivate(e.target.checked)}
+            className="mt-1 accent-primary"
+          />
           <span>
             Make this trip private
             <span className="mt-0.5 block text-label font-body text-foreground/50">

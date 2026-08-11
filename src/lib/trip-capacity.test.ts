@@ -23,7 +23,6 @@ function makeTrip(overrides: Partial<TripWithCounts> = {}): TripWithCounts {
     vehicle_type_name: "Standard",
     seats_filled: 1,
     bags_filled: 1,
-    cost_per_person: 40,
     ...overrides,
   };
 }

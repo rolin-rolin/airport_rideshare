@@ -5,8 +5,10 @@ import { getMyActiveTrip, getTripForView } from "@/lib/trips";
 import { RouteDisplay } from "@/components/RouteDisplay";
 import { CapacityRow } from "@/components/CapacityRow";
 import { JoinTripButton } from "@/components/JoinTripButton";
+import { TripPricing } from "@/components/TripPricing";
 import { CopyTripLinkButton } from "@/components/CopyTripLinkButton";
 import { FormattedTripDate, FormattedTripTime } from "@/components/FormattedTripTime";
+import { SetContactInfoForm } from "@/components/SetContactInfoForm";
 
 const DIRECTION_LABEL = {
   to_airport: "Leaves campus at",
@@ -51,8 +53,10 @@ export default async function TripDetailPage({
 
   const isMember = trip.members.some((m) => m.user_id === user?.id);
   const isPoster = trip.created_by === user?.id;
-  const isTerminal = trip.status === "expired" || trip.status === "abandoned";
   const inAnotherTrip = myActiveTrip != null && myActiveTrip.id !== trip.id;
+  // Mirrors the fallthrough below that renders <JoinTripButton> — same
+  // eligibility TripPricing needs to know whether to show "if you join".
+  const canJoin = !isMember && !inAnotherTrip && trip.status === "open";
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-6">
@@ -85,14 +89,9 @@ export default async function TripDetailPage({
           <RouteDisplay pickup={trip.pickup_location} dropoff={trip.dropoff_location} />
         </div>
 
-        {trip.cost_per_person != null && (
-          <p className="mt-4 text-price font-display font-semibold text-live">
-            ~${Math.round(trip.cost_per_person)}
-            <span className="text-body font-body font-normal text-foreground/60">
-              /person est.
-            </span>
-          </p>
-        )}
+        <div className="mt-4">
+          <TripPricing trip={trip} includeViewer={canJoin} />
+        </div>
 
         {trip.vehicle_type_name && (
           <p className="mt-4 text-label font-display font-semibold text-accent">
@@ -151,6 +150,8 @@ export default async function TripDetailPage({
             to coordinate
           </p>
         )}
+
+        {isPoster && !trip.contact_method && <SetContactInfoForm tripId={trip.id} />}
       </div>
 
       {/* Join states. Capacity never hides the panel — the rider hasn't said
@@ -162,8 +163,14 @@ export default async function TripDetailPage({
           <p className="text-body font-body text-primary">
             You&apos;re in this trip.
           </p>
-        ) : isTerminal ? (
-          <p className="text-body font-body text-foreground/50">This trip has ended.</p>
+        ) : trip.status === "expired" ? (
+          <p className="text-body font-body text-foreground/50">
+            This trip expired &mdash; nobody confirmed within an hour of departure.
+          </p>
+        ) : trip.status === "abandoned" ? (
+          <p className="text-body font-body text-foreground/50">
+            This trip was abandoned &mdash; every rider left before departure.
+          </p>
         ) : inAnotherTrip ? (
           <p className="text-body font-body text-foreground/50">
             You&apos;re already in a trip. Leave your current trip before joining

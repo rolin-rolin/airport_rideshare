@@ -1,8 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import type { REALTIME_SUBSCRIBE_STATES } from "@supabase/supabase-js";
+
+// "idle" = no status callback has fired yet for this channel (e.g. no
+// activeTripId, so the trip channel was never opened). Kept distinct from
+// the real supabase-js states so we can tell "never subscribed" apart from
+// "subscribed, then dropped" -- see the visibility rule below.
+type ChannelStatus = REALTIME_SUBSCRIBE_STATES | "idle";
 
 // Pages with no live board/roster data worth refreshing, where a
 // self-triggered realtime event could otherwise race the page's own
@@ -51,32 +58,64 @@ export function TripsRealtimeListener({ activeTripId }: { activeTripId: string |
     }, 300);
   }, [router]);
 
+  // Per-channel subscribe status, surfaced as a small "reconnecting"
+  // indicator below. Both start "idle" so the very first render (before
+  // either channel's .subscribe() callback has fired at all) shows nothing
+  // -- only a callback actually reporting a non-SUBSCRIBED state flips the
+  // indicator on, whether that's an initial failure/timeout or a drop after
+  // a prior successful subscribe.
+  const [boardStatus, setBoardStatus] = useState<ChannelStatus>("idle");
+  const [tripStatus, setTripStatus] = useState<ChannelStatus>("idle");
+
   useEffect(() => {
     const supabase = createClient();
     const channel = supabase
       .channel("board-public", { config: { private: true } })
       .on("broadcast", { event: "change" }, scheduleRefresh)
-      .subscribe();
+      .subscribe((status) => setBoardStatus(status));
 
     return () => {
       if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
       supabase.removeChannel(channel);
+      setBoardStatus("idle");
     };
   }, [scheduleRefresh]);
 
   useEffect(() => {
+    // No setTripStatus("idle") needed here: when activeTripId goes from set
+    // to null, the previous run's cleanup below already resets it before
+    // this effect body runs again.
     if (!activeTripId) return;
 
     const supabase = createClient();
     const channel = supabase
       .channel(`trip:${activeTripId}`, { config: { private: true } })
       .on("broadcast", { event: "change" }, scheduleRefresh)
-      .subscribe();
+      .subscribe((status) => setTripStatus(status));
 
     return () => {
       supabase.removeChannel(channel);
+      setTripStatus("idle");
     };
   }, [activeTripId, scheduleRefresh]);
 
-  return null;
+  // "idle" (no callback yet, or no trip channel open) never counts as
+  // disconnected -- that's what keeps this from flashing on every normal
+  // mount, per the rule above.
+  const isDown = (status: ChannelStatus) => status !== "idle" && status !== "SUBSCRIBED";
+  const showReconnecting = isDown(boardStatus) || isDown(tripStatus);
+
+  if (!showReconnecting) return null;
+
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-2"
+    >
+      <div className="rounded-full border border-border bg-background px-3 py-1 text-label font-body text-accent shadow-sm">
+        Reconnecting…
+      </div>
+    </div>
+  );
 }

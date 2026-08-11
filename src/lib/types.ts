@@ -49,7 +49,6 @@ export interface TripWithCounts extends Trip {
   vehicle_type_name: string | null;
   seats_filled: number;
   bags_filled: number;
-  cost_per_person: number | null;
 }
 
 export interface SignupMember {

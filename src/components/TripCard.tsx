@@ -1,9 +1,17 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import type { Direction, TripWithCounts } from "@/lib/types";
 import { RouteDisplay } from "@/components/RouteDisplay";
 import { CapacityRow } from "@/components/CapacityRow";
 import { JoinTripButton } from "@/components/JoinTripButton";
+import { TripPricing } from "@/components/TripPricing";
 import { formatTripDate, formatTripTime } from "@/components/FormattedTripTime";
+
+// How long a join failure stays visible after it's reported. Long enough to
+// read, short enough not to stick around forever once it's stale.
+const JOIN_ERROR_LINGER_MS = 8000;
 
 const DIRECTION_LABEL: Record<Direction, string> = {
   to_airport: "Leaves campus",
@@ -27,6 +35,26 @@ export function TripCard({
   flash?: boolean;
   removing?: boolean;
 }) {
+  // Owned here, one level up from JoinTripButton, so a join failure that
+  // arrives the same tick as a realtime "trip is now full" refresh (which
+  // flips canJoin false and unmounts JoinTripButton before its own local
+  // error state ever renders) still gets shown. TripCard itself doesn't
+  // unmount when canJoin flips, only the button inside it does.
+  const [joinError, setJoinError] = useState<string | null>(null);
+  const joinErrorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (joinErrorTimer.current) clearTimeout(joinErrorTimer.current);
+    };
+  }, []);
+
+  function handleJoinError(error: string) {
+    setJoinError(error);
+    if (joinErrorTimer.current) clearTimeout(joinErrorTimer.current);
+    joinErrorTimer.current = setTimeout(() => setJoinError(null), JOIN_ERROR_LINGER_MS);
+  }
+
   return (
     <div
       className={`relative rounded-xl border border-border bg-background p-5 transition-colors hover:border-primary/40 animate-[trip-card-enter_0.35s_ease-out] ${
@@ -55,14 +83,7 @@ export function TripCard({
         <span className="text-time font-display font-bold text-foreground">
           {formatTripDate(trip.departure_time)} @ {formatTripTime(trip.departure_time)}
         </span>
-        {trip.cost_per_person != null && (
-          <span className="text-price font-display font-semibold text-live">
-            ~${Math.round(trip.cost_per_person)}
-            <span className="text-body font-body font-normal text-foreground/60">
-              /person est.
-            </span>
-          </span>
-        )}
+        <TripPricing trip={trip} includeViewer={canJoin} className="shrink-0 text-right" />
       </div>
 
       <div className="mt-4">
@@ -105,13 +126,17 @@ export function TripCard({
             Won&apos;t fit
           </span>
         ) : canJoin ? (
-          <JoinTripButton trip={trip} />
+          <JoinTripButton trip={trip} onError={handleJoinError} />
         ) : trip.status === "full" ? (
           <span className="shrink-0 text-label font-display font-semibold text-foreground/40">
             Full
           </span>
         ) : null}
       </div>
+
+      {joinError && !isMine && !removing && (
+        <p className="relative z-10 mt-1.5 text-label font-body text-red-700">{joinError}</p>
+      )}
     </div>
   );
 }

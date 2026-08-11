@@ -123,6 +123,36 @@ export async function joinTrip(
   return { error: null };
 }
 
+// Lets a trip's owner (originally the poster, or whoever ownership passed
+// to when the poster left — see migration 0017) supply contact info. Only
+// reachable from the UI when trip.contact_method is null, i.e. after a
+// reassignment cleared the previous owner's info.
+export async function setTripContactInfo(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const { supabase } = await requireUser();
+
+  const tripId = String(formData.get("trip_id") ?? "");
+  const contactMethod = String(formData.get("contact_method") ?? "").trim();
+  const contactValue = String(formData.get("contact_value") ?? "").trim();
+
+  if (!tripId || !CONTACT_METHODS.includes(contactMethod as ContactMethod) || !contactValue) {
+    return { error: "Please choose a contact method and fill it in." };
+  }
+
+  const { error } = await supabase.rpc("set_trip_contact_info", {
+    p_trip_id: tripId,
+    p_contact_method: contactMethod,
+    p_contact_value: contactValue,
+  });
+
+  if (error) return { error: friendlyError(error) };
+
+  revalidatePath(`/dashboard/trips/${tripId}`);
+  return { error: null };
+}
+
 // Leaves whichever trip the user is currently signed up for — a user can
 // only ever have one active signup, so no trip_id is needed from the
 // client. The caller is responsible for showing DESIGN.md §4.3's reminder

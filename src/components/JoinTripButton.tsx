@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState, useTransition, type FormEvent } from "react";
 import { joinTrip } from "@/app/dashboard/actions";
 import { blockedReason, maxBagsForRider } from "@/lib/trip-capacity";
 import type { TripWithCounts } from "@/lib/types";
@@ -17,17 +17,41 @@ import type { TripWithCounts } from "@/lib/types";
 export function JoinTripButton({
   trip,
   defaultOpen = false,
+  onError,
 }: {
   trip: TripWithCounts;
   defaultOpen?: boolean;
+  // Called the instant joinTrip resolves with an error, in addition to (not
+  // instead of) this component's own local `error` state below. A losing
+  // bid for the last seat can resolve at the same tick as the realtime
+  // "trip is now full" refresh that flips this button back to a plain
+  // "Full" span in the parent — which unmounts this component before its
+  // own re-render carrying the new local error ever gets painted. This
+  // callback is a plain promise continuation, not a render, so it isn't at
+  // risk of that same discard; a parent that outlives us (TripCard) can
+  // hang onto it and keep the message visible after we're gone.
+  onError?: (error: string) => void;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const [bagCount, setBagCount] = useState(0);
-  const [state, formAction, isPending] = useActionState(joinTrip, { error: null });
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const reason = blockedReason(trip, bagCount);
 
   const maxBags = maxBagsForRider(trip);
+
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    startTransition(async () => {
+      const result = await joinTrip({ error: null }, formData);
+      if (result.error) {
+        onError?.(result.error);
+        setError(result.error);
+      }
+    });
+  }
 
   if (!open) {
     return (
@@ -42,7 +66,7 @@ export function JoinTripButton({
   }
 
   return (
-    <form action={formAction} className="flex shrink-0 flex-wrap items-center gap-2">
+    <form onSubmit={handleSubmit} className="flex shrink-0 flex-wrap items-center gap-2">
       <input type="hidden" name="trip_id" value={trip.id} />
       <label className="flex items-center gap-1.5 text-body font-body text-foreground/70">
         Bags
@@ -65,7 +89,7 @@ export function JoinTripButton({
         {isPending ? "Joining..." : "Confirm"}
       </button>
       {reason && <p className="text-label font-body text-foreground/60">{reason}</p>}
-      {state.error && <p className="text-label font-body text-red-700">{state.error}</p>}
+      {error && <p className="text-label font-body text-red-700">{error}</p>}
     </form>
   );
 }

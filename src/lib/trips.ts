@@ -30,10 +30,11 @@ type SignupRow = {
   profiles?: { email: string } | null;
 };
 
-// Attaches live seat/bag counts and cost-per-person to each trip, derived
-// from active (left_at IS NULL) signups — DESIGN.md §7: "Live spot count and
-// bag count are computed from active signups rows against seat_capacity /
-// bag_capacity on the trip."
+// Attaches live seat/bag counts to each trip, derived from active
+// (left_at IS NULL) signups — DESIGN.md §7: "Live spot count and bag count
+// are computed from active signups rows against seat_capacity / bag_capacity
+// on the trip." Per-person pricing is derived separately, per-viewer, by
+// trip-pricing.ts.
 // Exported for unit testing; not otherwise part of the public API surface.
 export function withCounts(
   trip: Trip & { vehicle_types: { name: string } | null },
@@ -47,10 +48,6 @@ export function withCounts(
     vehicle_type_name: trip.vehicle_types?.name ?? null,
     seats_filled,
     bags_filled,
-    cost_per_person:
-      trip.estimated_total_cost != null && seats_filled > 0
-        ? trip.estimated_total_cost / seats_filled
-        : null,
   };
 }
 

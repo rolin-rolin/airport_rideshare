@@ -7,6 +7,7 @@ import { RouteDisplay } from "@/components/RouteDisplay";
 import { CapacityRow } from "@/components/CapacityRow";
 import { JoinTripButton } from "@/components/JoinTripButton";
 import { TripPricing } from "@/components/TripPricing";
+import { VehicleTypeInfoButton } from "@/components/VehicleTypeInfoButton";
 import { formatTripDate, formatTripTime } from "@/components/FormattedTripTime";
 
 // How long a join failure stays visible after it's reported. Long enough to
@@ -91,8 +92,9 @@ export function TripCard({
       </div>
 
       {trip.vehicle_type_name && (
-        <p className="mt-4 text-label font-display font-semibold text-accent">
+        <p className="relative z-10 mt-4 flex items-center gap-1.5 text-label font-display font-semibold text-accent">
           {trip.vehicle_type_name}
+          <VehicleTypeInfoButton />
         </p>
       )}
 

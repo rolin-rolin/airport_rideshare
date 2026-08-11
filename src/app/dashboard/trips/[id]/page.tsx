@@ -6,6 +6,7 @@ import { RouteDisplay } from "@/components/RouteDisplay";
 import { CapacityRow } from "@/components/CapacityRow";
 import { JoinTripButton } from "@/components/JoinTripButton";
 import { TripPricing } from "@/components/TripPricing";
+import { VehicleTypeInfoButton } from "@/components/VehicleTypeInfoButton";
 import { CopyTripLinkButton } from "@/components/CopyTripLinkButton";
 import { FormattedTripDate, FormattedTripTime } from "@/components/FormattedTripTime";
 import { SetContactInfoForm } from "@/components/SetContactInfoForm";
@@ -94,8 +95,9 @@ export default async function TripDetailPage({
         </div>
 
         {trip.vehicle_type_name && (
-          <p className="mt-4 text-label font-display font-semibold text-accent">
+          <p className="mt-4 flex items-center gap-1.5 text-label font-display font-semibold text-accent">
             {trip.vehicle_type_name}
+            <VehicleTypeInfoButton />
           </p>
         )}
 

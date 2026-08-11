@@ -19,3 +19,9 @@ To test as two real, simultaneously-logged-in users (e.g. verifying join/leave/r
 3. Note: each minted OTP is single-use — re-visiting a link after it's been consumed (or letting it sit long enough to expire) fails with `otp_expired`; mint a fresh one instead of reusing.
 
 This only isolates two sessions — normal + one private window. Additional simultaneous accounts need separate browser profiles, since multiple private windows in the same browser share one incognito cookie jar.
+
+# Parallel agents doing browser-based testing
+
+If multiple agents run concurrently and any of them drive a real browser (e.g. via claude-in-chrome) to test realtime/auth flows, giving each agent its own git worktree does NOT isolate their browser sessions — the claude-in-chrome tools share one actual Chrome profile/tab group across all agents by default. One agent minting a magic link and logging in as a different user will silently reauthenticate (or otherwise clobber tabs/state for) every other agent's open tabs, the same cookie-sharing problem described above, but between agents instead of between tabs.
+
+Before launching parallel agents that will each open browser tabs, either: give each its own isolated browser profile/tab group if the tooling supports it, or serialize just the browser-touching steps (e.g. have agents queue for the shared browser, or fall back to driving the same client calls directly via a script instead of real clicks, as a workaround if isolation isn't available).

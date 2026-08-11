@@ -17,19 +17,24 @@ export function TripPricing({
   const pricing = tripPricing(trip, includeViewer);
   if (!pricing) return null;
 
+  const detail =
+    pricing.moreNeeded === 0
+      ? "Max savings reached — this is the lowest this trip's price will get"
+      : `$${Math.round(pricing.perPersonNow)}/person${
+          pricing.includesViewer ? " if you join" : ""
+        } → $${Math.round(pricing.perPersonAtCapacity)}/person if trip fills up`;
+
   return (
     <div className={className}>
-      <span className="text-price font-display font-semibold text-live">
+      <span
+        title={detail}
+        className="cursor-help text-price font-display font-semibold text-live decoration-dotted decoration-1 underline-offset-4 hover:underline"
+      >
         ~${Math.round(pricing.perPersonNow)}
         <span className="text-body font-body font-normal text-foreground/60">
           /person{pricing.includesViewer ? " if you join" : ""}
         </span>
       </span>
-      <p className="mt-0.5 text-label font-body text-foreground/50">
-        {pricing.moreNeeded === 0
-          ? "Max savings reached"
-          : `$${Math.round(pricing.perPersonNow)}/person now → $${Math.round(pricing.perPersonAtCapacity)}/person if ${pricing.moreNeeded} more join`}
-      </p>
     </div>
   );
 }

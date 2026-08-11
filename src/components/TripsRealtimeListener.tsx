@@ -67,19 +67,44 @@ export function TripsRealtimeListener({ activeTripId }: { activeTripId: string |
   const [boardStatus, setBoardStatus] = useState<ChannelStatus>("idle");
   const [tripStatus, setTripStatus] = useState<ChannelStatus>("idle");
 
+  // CHANNEL_ERROR on a private channel isn't guaranteed to be transient the
+  // way TIMED_OUT/CLOSED are (supabase-js keeps retrying those on its own
+  // and they can recover). Tested directly against this app's RLS policies
+  // (0014/0015): subscribing to a `trip:<id>` topic this session has no
+  // access to comes back CHANNEL_ERROR immediately and supabase-js retries
+  // the same rejected subscribe every few seconds forever -- it never
+  // becomes SUBSCRIBED, because the denial isn't going anywhere. That can't
+  // happen through normal navigation (activeTripId only ever names a trip
+  // getMyActiveTripId() -- itself RLS-scoped -- just confirmed this session
+  // can still read), but it can happen if that read raced a permission
+  // change (e.g. the 0006 cleanup cron closing this user's signup) and this
+  // tab hasn't re-rendered since. The fix for a stale activeTripId is a
+  // fresh server render, so treat CHANNEL_ERROR as a cue to ask for one --
+  // the same refresh a broadcast ping already triggers. If the trip access
+  // is really gone this clears activeTripId (and the channel below with
+  // it); if the error was something else transient, activeTripId is
+  // unchanged and the effect just resubscribes as before.
+  const handleStatus = useCallback(
+    (setStatus: (status: ChannelStatus) => void) => (status: ChannelStatus) => {
+      setStatus(status);
+      if (status === "CHANNEL_ERROR") scheduleRefresh();
+    },
+    [scheduleRefresh],
+  );
+
   useEffect(() => {
     const supabase = createClient();
     const channel = supabase
       .channel("board-public", { config: { private: true } })
       .on("broadcast", { event: "change" }, scheduleRefresh)
-      .subscribe((status) => setBoardStatus(status));
+      .subscribe(handleStatus(setBoardStatus));
 
     return () => {
       if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
       supabase.removeChannel(channel);
       setBoardStatus("idle");
     };
-  }, [scheduleRefresh]);
+  }, [scheduleRefresh, handleStatus]);
 
   useEffect(() => {
     // No setTripStatus("idle") needed here: when activeTripId goes from set
@@ -91,13 +116,13 @@ export function TripsRealtimeListener({ activeTripId }: { activeTripId: string |
     const channel = supabase
       .channel(`trip:${activeTripId}`, { config: { private: true } })
       .on("broadcast", { event: "change" }, scheduleRefresh)
-      .subscribe((status) => setTripStatus(status));
+      .subscribe(handleStatus(setTripStatus));
 
     return () => {
       supabase.removeChannel(channel);
       setTripStatus("idle");
     };
-  }, [activeTripId, scheduleRefresh]);
+  }, [activeTripId, scheduleRefresh, handleStatus]);
 
   // "idle" (no callback yet, or no trip channel open) never counts as
   // disconnected -- that's what keeps this from flashing on every normal

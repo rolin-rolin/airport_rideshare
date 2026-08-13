@@ -4,10 +4,16 @@ import { CapacityRow } from "@/components/CapacityRow";
 import { LeaveTripButton } from "@/components/LeaveTripButton";
 import { GroupStatusFlash } from "@/components/GroupStatusFlash";
 import { FormattedTripDate, FormattedTripTime } from "@/components/FormattedTripTime";
+import { tripPricing } from "@/lib/trip-pricing";
 
 export async function GroupStatusBar() {
   const trip = await getMyActiveTrip();
   if (!trip) return null;
+
+  // includeViewer: false — the viewer is already one of trip.seats_filled,
+  // so this is their real current price, not the hypothetical "if you join"
+  // figure TripPricing shows on other cards.
+  const pricing = tripPricing(trip, false);
 
   return (
     <GroupStatusFlash
@@ -24,6 +30,11 @@ export async function GroupStatusBar() {
           <p className="mt-0.5 text-body font-body text-foreground">
             {trip.pickup_location} &rarr; {trip.dropoff_location}
           </p>
+          {pricing && (
+            <p className="mt-0.5 text-body font-body text-foreground">
+              You&apos;re paying: ${Math.round(pricing.perPersonNow)}
+            </p>
+          )}
           <div className="mt-1.5">
             <CapacityRow
               seatsFilled={trip.seats_filled}

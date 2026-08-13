@@ -101,7 +101,7 @@ export function TripsBoard({
         }
       }
 
-      // Append genuinely new trips (never seen before) at the end.
+      // Add genuinely new trips (never seen before).
       for (const trip of trips) {
         if (!prev.some((entry) => entry.id === trip.id)) {
           prevCounts.current.set(trip.id, {
@@ -111,6 +111,16 @@ export function TripsBoard({
           next.push(trip);
         }
       }
+
+      // `next` was built by walking `prev`'s order, so a new trip (pushed
+      // above) or one that jumped the queue (e.g. its departure time
+      // changed) would otherwise sit wherever it landed instead of where
+      // `trips` — always server-sorted by departure_time — says it belongs.
+      // Re-sorting here keeps the earliest-first order without discarding
+      // the lingering/flash bookkeeping above.
+      next.sort(
+        (a, b) => new Date(a.departure_time).getTime() - new Date(b.departure_time).getTime(),
+      );
 
       return next;
     });

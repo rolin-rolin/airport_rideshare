@@ -13,8 +13,9 @@ const CONTACT_METHOD_OPTIONS: { value: ContactMethod; label: string; inputType: 
 // Every field is required except max luggage per person and the private
 // checkbox. Rather than the browser's native `required` (which blocks
 // submission with its own popover before the user ever sees which fields
-// are at fault), validity is tracked here and only surfaced — as a red
-// border, per field — once the user has actually tried to submit.
+// are at fault), validity is tracked here field-by-field so the submit
+// button itself can stay disabled until everything's filled in — the user
+// gets turned away before they even try, instead of after.
 type FieldName =
   | "departure_time"
   | "pickup_location"
@@ -71,7 +72,7 @@ export function TripForm({
     return `${fieldClass} ${invalidFields.has(name) ? invalidFieldClass : ""}`;
   }
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function computeInvalidFields(): Set<FieldName> {
     const invalid = new Set<FieldName>();
     if (!departureTimeIso) invalid.add("departure_time");
     if (!pickupLocation.trim()) invalid.add("pickup_location");
@@ -81,7 +82,17 @@ export function TripForm({
     if (!contactMethod) invalid.add("contact_method");
     if (contactMethod && !contactValue.trim()) invalid.add("contact_value");
     if (!bagCount.trim()) invalid.add("bag_count");
+    return invalid;
+  }
 
+  // Recomputed every render off current field state (cheap: a handful of
+  // string checks) so the submit button's disabled state always reflects
+  // what's actually filled in, not just what was true at the last submit
+  // attempt.
+  const missingFields = computeInvalidFields();
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    const invalid = computeInvalidFields();
     setInvalidFields(invalid);
     if (invalid.size > 0) {
       e.preventDefault();
@@ -275,7 +286,7 @@ export function TripForm({
 
       <button
         type="submit"
-        disabled={isPending}
+        disabled={isPending || missingFields.size > 0}
         className="mt-2 rounded-full bg-primary px-5 py-2.5 text-body font-display font-semibold text-background transition-colors hover:bg-primary/90 disabled:opacity-50"
       >
         {isPending ? "Posting..." : "Post trip"}

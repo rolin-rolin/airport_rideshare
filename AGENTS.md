@@ -6,7 +6,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Supabase migrations
 
-Whenever a new migration is added under `supabase/migrations/`, run `supabase db push` to apply it to the linked remote project in the same session — don't leave local and remote migration state to drift apart.
+Whenever a new migration is added under `supabase/migrations/`, run both `supabase db push` (applies it to the linked remote project) *and* `supabase migration up --local` (applies it to the local dev Supabase instance) in the same session — don't leave any of local, remote, and the migration files on disk to drift apart. `db push` only touches remote; it's easy to assume that covers everything and then find a feature "isn't working" during local testing when actually the local DB just never got the migration (missing function/trigger, not a code bug). Check with `supabase migration list --local` if unsure what's applied where.
 
 # Testing multi-user realtime flows
 

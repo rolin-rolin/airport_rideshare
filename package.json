@@ -11,6 +11,7 @@
     "test:db": "supabase test db --local"
   },
   "dependencies": {
+    "@radix-ui/react-tooltip": "^1.2.16",
     "@supabase/ssr": "^0.12.1",
     "@supabase/supabase-js": "^2.110.3",
     "next": "16.2.10",

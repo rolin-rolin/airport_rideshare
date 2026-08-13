@@ -55,9 +55,6 @@ export default async function TripDetailPage({
   const isMember = trip.members.some((m) => m.user_id === user?.id);
   const isPoster = trip.created_by === user?.id;
   const inAnotherTrip = myActiveTrip != null && myActiveTrip.id !== trip.id;
-  // Mirrors the fallthrough below that renders <JoinTripButton> — same
-  // eligibility TripPricing needs to know whether to show "if you join".
-  const canJoin = !isMember && !inAnotherTrip && trip.status === "open";
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-6">
@@ -91,7 +88,7 @@ export default async function TripDetailPage({
         </div>
 
         <div className="mt-4">
-          <TripPricing trip={trip} includeViewer={canJoin} />
+          <TripPricing trip={trip} includeViewer={!isMember} />
         </div>
 
         {trip.vehicle_type_name && (
@@ -167,7 +164,7 @@ export default async function TripDetailPage({
           </p>
         ) : trip.status === "expired" ? (
           <p className="text-body font-body text-foreground/50">
-            This trip expired &mdash; nobody confirmed within an hour of departure.
+            This trip expired &mdash; trips expire an hour after the set departure time.
           </p>
         ) : trip.status === "abandoned" ? (
           <p className="text-body font-body text-foreground/50">

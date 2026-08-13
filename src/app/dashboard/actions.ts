@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import type { ContactMethod, Direction } from "@/lib/types";
+import { TIMEZONE_OPTIONS, type TripTimezone } from "@/lib/timezone";
 
 const CONTACT_METHODS: ContactMethod[] = ["phone", "link", "email"];
+const TIMEZONES: TripTimezone[] = TIMEZONE_OPTIONS.map((o) => o.value);
 import { friendlyError } from "@/lib/friendly-error";
 
 type ActionState = { error: string | null };
@@ -32,6 +34,7 @@ export async function createTrip(
 
   const direction = String(formData.get("direction")) as Direction;
   const departureTime = String(formData.get("departure_time"));
+  const timezone = String(formData.get("timezone") ?? "");
   const pickupLocation = String(formData.get("pickup_location") ?? "").trim();
   const dropoffLocation = String(formData.get("dropoff_location") ?? "").trim();
   const vehicleTypeId = String(formData.get("vehicle_type_id") ?? "");
@@ -63,10 +66,14 @@ export async function createTrip(
   if (!CONTACT_METHODS.includes(contactMethodRaw as ContactMethod)) {
     return { error: "Invalid contact method." };
   }
+  if (!TIMEZONES.includes(timezone as TripTimezone)) {
+    return { error: "Invalid timezone." };
+  }
 
   const { data: tripId, error } = await supabase.rpc("create_trip_with_signup", {
     p_direction: direction,
     p_departure_time: new Date(departureTime).toISOString(),
+    p_timezone: timezone,
     p_pickup_location: pickupLocation,
     p_dropoff_location: dropoffLocation,
     p_vehicle_type_id: vehicleTypeId,

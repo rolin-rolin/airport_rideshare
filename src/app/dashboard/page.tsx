@@ -46,13 +46,7 @@ export default async function DashboardPage({
 
       <TabNav />
 
-      {trips.length === 0 ? (
-        <p className="mt-8 text-center text-body font-body text-foreground/50">
-          No trips posted yet for this direction.
-        </p>
-      ) : (
-        <TripsBoard trips={trips} direction={direction} myActiveTrip={myActiveTrip} />
-      )}
+      <TripsBoard key={direction} trips={trips} direction={direction} myActiveTrip={myActiveTrip} />
     </div>
   );
 }

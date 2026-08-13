@@ -147,7 +147,9 @@ export function TripsBoard({
     return displayed.filter((trip) => {
       if (trip._removing) return true;
       if (date) {
-        const tripDate = new Date(trip.departure_time).toLocaleDateString("en-CA");
+        const tripDate = new Date(trip.departure_time).toLocaleDateString("en-CA", {
+          timeZone: trip.timezone,
+        });
         if (tripDate !== date) return false;
       }
       if (destination.trim()) {
@@ -205,7 +207,7 @@ export function TripsBoard({
 
       {filtered.length === 0 ? (
         <p className="mt-8 text-center text-body font-body text-foreground/50">
-          No trips match your filters.
+          {trips.length === 0 ? "No trips posted yet for this direction." : "No trips match your filters."}
         </p>
       ) : (
         <div className="flex flex-col gap-3">

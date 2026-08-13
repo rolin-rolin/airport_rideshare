@@ -80,9 +80,10 @@ export function TripCard({
         {DIRECTION_LABEL[direction]}
       </p>
 
-      <div className="relative z-10 mt-1 flex items-baseline justify-between gap-3">
+      <div className="relative z-10 mt-1 flex items-end justify-between gap-3">
         <span className="text-time font-display font-bold text-foreground">
-          {formatTripDate(trip.departure_time)} @ {formatTripTime(trip.departure_time)}
+          {formatTripDate(trip.departure_time, trip.timezone)} @{" "}
+          {formatTripTime(trip.departure_time, trip.timezone)}
         </span>
         <TripPricing trip={trip} includeViewer={!isMine} className="shrink-0 text-right" />
       </div>

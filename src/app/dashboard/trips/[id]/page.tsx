@@ -9,7 +9,6 @@ import { TripPricing } from "@/components/TripPricing";
 import { VehicleTypeInfoButton } from "@/components/VehicleTypeInfoButton";
 import { CopyTripLinkButton } from "@/components/CopyTripLinkButton";
 import { FormattedTripDate, FormattedTripTime } from "@/components/FormattedTripTime";
-import { SetContactInfoForm } from "@/components/SetContactInfoForm";
 
 const DIRECTION_LABEL = {
   to_airport: "Leaves campus at",
@@ -72,8 +71,8 @@ export default async function TripDetailPage({
               {DIRECTION_LABEL[trip.direction]}
             </p>
             <p className="mt-1 text-time font-display font-bold text-foreground">
-              <FormattedTripDate iso={trip.departure_time} /> @{" "}
-              <FormattedTripTime iso={trip.departure_time} />
+              <FormattedTripDate iso={trip.departure_time} timeZone={trip.timezone} /> @{" "}
+              <FormattedTripTime iso={trip.departure_time} timeZone={trip.timezone} />
             </p>
           </div>
           {trip.visibility === "private" && (
@@ -149,8 +148,6 @@ export default async function TripDetailPage({
             to coordinate
           </p>
         )}
-
-        {isPoster && !trip.contact_method && <SetContactInfoForm tripId={trip.id} />}
       </div>
 
       {/* Join states. Capacity never hides the panel — the rider hasn't said

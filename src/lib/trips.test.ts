@@ -9,6 +9,7 @@ function makeTrip(overrides: Partial<TripRow> = {}): TripRow {
     id: "trip-1",
     direction: "to_airport",
     departure_time: "2026-08-01T12:00:00.000Z",
+    timezone: "America/Chicago",
     pickup_location: "Dorm",
     dropoff_location: "Airport",
     vehicle_type_id: "vt-1",

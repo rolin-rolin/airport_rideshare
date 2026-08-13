@@ -3,12 +3,27 @@
 import { useActionState, useState } from "react";
 import { createTrip } from "@/app/dashboard/actions";
 import type { ContactMethod, Direction, VehicleType } from "@/lib/types";
+import { TIMEZONE_OPTIONS, zonedDateTimeLocalToUtcIso, type TripTimezone } from "@/lib/timezone";
 
 const CONTACT_METHOD_OPTIONS: { value: ContactMethod; label: string; inputType: string; placeholder: string }[] = [
   { value: "phone", label: "Phone number", inputType: "tel", placeholder: "(555) 123-4567" },
   { value: "link", label: "Group chat link", inputType: "url", placeholder: "https://groupme.com/join_group/..." },
   { value: "email", label: "Email", inputType: "email", placeholder: "you@example.com" },
 ];
+
+const AIRPORT_LOCATIONS = [
+  "O'Hare Terminal 1",
+  "O'Hare Terminal 2",
+  "O'Hare Terminal 3",
+  "O'Hare Terminal 5",
+  "Midway Airport",
+  "South Bend Airport",
+  "South Bend Amtrak",
+];
+
+const NOTRE_DAME_LOCATIONS = ["Main Circle", "Library Circle"];
+
+const OTHER_LOCATION = "__other__";
 
 // Every field is required except max luggage per person and the private
 // checkbox. Rather than the browser's native `required` (which blocks
@@ -31,6 +46,67 @@ const fieldClass =
 const labelClass = "flex flex-col gap-1 text-label font-display font-semibold text-foreground/70";
 const invalidFieldClass = "border-red-500 focus:border-red-500";
 
+function LocationField({
+  label,
+  name,
+  placeholder,
+  options,
+  value,
+  onChange,
+  className,
+}: {
+  label: string;
+  name: string;
+  placeholder: string;
+  options: string[];
+  value: string;
+  onChange: (value: string) => void;
+  className: string;
+}) {
+  const [otherSelected, setOtherSelected] = useState(false);
+  const selectValue = otherSelected ? OTHER_LOCATION : value;
+
+  return (
+    <label className={labelClass}>
+      {label}
+      <select
+        value={selectValue}
+        onChange={(e) => {
+          if (e.target.value === OTHER_LOCATION) {
+            setOtherSelected(true);
+            onChange("");
+          } else {
+            setOtherSelected(false);
+            onChange(e.target.value);
+          }
+        }}
+        className={className}
+      >
+        <option value="" disabled>
+          Select a location&hellip;
+        </option>
+        {options.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+        <option value={OTHER_LOCATION}>Other&hellip;</option>
+      </select>
+      {otherSelected && (
+        <input
+          type="text"
+          name={name}
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={`mt-2 ${className}`}
+        />
+      )}
+      {!otherSelected && <input type="hidden" name={name} value={value} />}
+    </label>
+  );
+}
+
 export function TripForm({
   vehicleTypes,
   direction,
@@ -42,13 +118,16 @@ export function TripForm({
   const [vehicleTypeId, setVehicleTypeId] = useState(vehicleTypes[0]?.id ?? "");
   const [seatCapacity, setSeatCapacity] = useState(vehicleTypes[0]?.default_seat_capacity ?? 0);
   const [bagCapacity, setBagCapacity] = useState(vehicleTypes[0]?.default_bag_capacity ?? 0);
-  // datetime-local's raw value has no timezone, so it must be converted to
-  // an unambiguous ISO string here, in the browser, where `new Date` resolves
-  // it against the user's own timezone. Doing this conversion in the server
-  // action instead would resolve it against the server's timezone, silently
-  // storing the wrong instant for any user not in that zone.
+  // datetime-local's raw value has no timezone. The poster is entering a
+  // wall-clock time for the trip's departure location, not their own
+  // current location, so it must be resolved against the timezone they
+  // pick below -- not the browser's own timezone (which would silently
+  // store the wrong instant for a poster traveling outside it).
+  const [timezone, setTimezone] = useState<TripTimezone>(TIMEZONE_OPTIONS[0].value);
   const [departureTimeLocal, setDepartureTimeLocal] = useState("");
-  const departureTimeIso = departureTimeLocal ? new Date(departureTimeLocal).toISOString() : "";
+  const departureTimeIso = departureTimeLocal
+    ? zonedDateTimeLocalToUtcIso(departureTimeLocal, timezone)
+    : "";
   const [pickupLocation, setPickupLocation] = useState("");
   const [dropoffLocation, setDropoffLocation] = useState("");
   const [estimatedTotalCost, setEstimatedTotalCost] = useState("");
@@ -107,39 +186,56 @@ export function TripForm({
       <input type="hidden" name="direction" value={direction} />
 
       <input type="hidden" name="departure_time" value={departureTimeIso} />
-      <label className={labelClass}>
-        Departure time
-        <input
-          type="datetime-local"
-          className={fieldClassFor("departure_time")}
-          value={departureTimeLocal}
-          onChange={(e) => setDepartureTimeLocal(e.target.value)}
-        />
-      </label>
+      <div className="flex gap-4">
+        <label className={`min-w-0 flex-1 ${labelClass}`}>
+          Departure time
+          <input
+            type="datetime-local"
+            className={fieldClassFor("departure_time")}
+            value={departureTimeLocal}
+            onChange={(e) => setDepartureTimeLocal(e.target.value)}
+          />
+        </label>
+        <label className={labelClass}>
+          Timezone
+          <select
+            name="timezone"
+            value={timezone}
+            onChange={(e) => setTimezone(e.target.value as TripTimezone)}
+            className={fieldClass}
+          >
+            {TIMEZONE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <p className="-mt-2 text-label font-body text-foreground/50">
+        Enter the time where this trip departs from. This trip posting expires one hour after
+        departure — coordinate with your group before then.
+      </p>
 
-      <label className={labelClass}>
-        Pickup location
-        <input
-          type="text"
-          name="pickup_location"
-          placeholder="Dillon Hall"
-          value={pickupLocation}
-          onChange={(e) => setPickupLocation(e.target.value)}
-          className={fieldClassFor("pickup_location")}
-        />
-      </label>
+      <LocationField
+        label="Pickup location"
+        name="pickup_location"
+        placeholder="Dillon Hall"
+        options={direction === "to_airport" ? NOTRE_DAME_LOCATIONS : AIRPORT_LOCATIONS}
+        value={pickupLocation}
+        onChange={setPickupLocation}
+        className={fieldClassFor("pickup_location")}
+      />
 
-      <label className={labelClass}>
-        Dropoff location
-        <input
-          type="text"
-          name="dropoff_location"
-          placeholder="O'Hare T1"
-          value={dropoffLocation}
-          onChange={(e) => setDropoffLocation(e.target.value)}
-          className={fieldClassFor("dropoff_location")}
-        />
-      </label>
+      <LocationField
+        label="Dropoff location"
+        name="dropoff_location"
+        placeholder="O'Hare T1"
+        options={direction === "to_airport" ? AIRPORT_LOCATIONS : NOTRE_DAME_LOCATIONS}
+        value={dropoffLocation}
+        onChange={setDropoffLocation}
+        className={fieldClassFor("dropoff_location")}
+      />
 
       <label className={labelClass}>
         Vehicle type

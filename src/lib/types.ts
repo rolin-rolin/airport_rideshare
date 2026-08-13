@@ -1,5 +1,7 @@
 // Mirrors supabase/migrations/0002_trips_and_signups.sql.
 
+import type { TripTimezone } from "@/lib/timezone";
+
 export type Direction = "to_airport" | "from_airport";
 export type TripStatus = "open" | "full" | "expired" | "abandoned";
 
@@ -23,6 +25,9 @@ export interface Trip {
   id: string;
   direction: Direction;
   departure_time: string;
+  // The timezone the poster picked for departure_time (see lib/timezone.ts)
+  // — the trip's physical departure point, not any viewer's own zone.
+  timezone: TripTimezone;
   pickup_location: string;
   dropoff_location: string;
   vehicle_type_id: string | null;

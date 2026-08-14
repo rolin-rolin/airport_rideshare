@@ -69,7 +69,7 @@ export function JoinTripButton({
     <form onSubmit={handleSubmit} className="flex shrink-0 flex-wrap items-center gap-2">
       <input type="hidden" name="trip_id" value={trip.id} />
       <label className="flex items-center gap-1.5 text-body font-body text-foreground/70">
-        Bags
+        Suitcases
         <input
           type="number"
           name="bag_count"
@@ -78,6 +78,7 @@ export function JoinTripButton({
           value={bagCount}
           onChange={(e) => setBagCount(Number(e.target.value))}
           required
+          title="Count whatever you can't fit on your lap"
           className="w-12 rounded-md border border-border bg-background px-2 py-1 text-body font-body text-foreground outline-none focus:border-primary"
         />
       </label>

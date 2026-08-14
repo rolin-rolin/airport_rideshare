@@ -32,14 +32,14 @@ export function GroupStatusFlash({
     if (!changed) return;
 
     setFlash(true);
-    const timer = setTimeout(() => setFlash(false), 1200);
+    const timer = setTimeout(() => setFlash(false), 2500);
     return () => clearTimeout(timer);
   }, [tripId, seatsFilled, bagsFilled]);
 
   return (
     <div
       className={`border-b border-border bg-primary/[.06] ${
-        flash ? "animate-[trip-card-flash_1.2s_ease-out]" : ""
+        flash ? "animate-[trip-card-flash_2.5s_ease-out]" : ""
       }`}
     >
       {children}

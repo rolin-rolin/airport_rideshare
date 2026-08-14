@@ -35,7 +35,7 @@ describe("blockedReason", () => {
 
   it("blocks luggage over the per-person cap", () => {
     const trip = makeTrip({ max_bags_per_person: 1 });
-    expect(blockedReason(trip, 2)).toBe("Limits riders to 1 bag each");
+    expect(blockedReason(trip, 2)).toBe("Limits riders to 1 suitcase each");
   });
 
   it("allows exactly the per-person cap", () => {
@@ -45,7 +45,7 @@ describe("blockedReason", () => {
 
   it("pluralises the per-person cap message", () => {
     const trip = makeTrip({ max_bags_per_person: 2 });
-    expect(blockedReason(trip, 3)).toBe("Limits riders to 2 bags each");
+    expect(blockedReason(trip, 3)).toBe("Limits riders to 2 suitcases each");
   });
 
   it("treats a null per-person cap as no limit", () => {
@@ -55,7 +55,7 @@ describe("blockedReason", () => {
 
   it("blocks luggage over the trip's remaining bag capacity", () => {
     const trip = makeTrip({ bag_capacity: 4, bags_filled: 3 });
-    expect(blockedReason(trip, 2)).toBe("Not enough bag space left for your luggage");
+    expect(blockedReason(trip, 2)).toBe("Not enough suitcase space left");
   });
 
   it("allows luggage that exactly fills the remaining capacity", () => {
@@ -65,7 +65,7 @@ describe("blockedReason", () => {
 
   it("reports the per-person cap first when both limits are exceeded", () => {
     const trip = makeTrip({ max_bags_per_person: 1, bag_capacity: 4, bags_filled: 4 });
-    expect(blockedReason(trip, 3)).toBe("Limits riders to 1 bag each");
+    expect(blockedReason(trip, 3)).toBe("Limits riders to 1 suitcase each");
   });
 });
 

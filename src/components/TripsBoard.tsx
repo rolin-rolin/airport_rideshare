@@ -18,8 +18,8 @@ const labelClass = "flex flex-col gap-1 text-label font-display font-semibold te
 const REMOVE_LINGER_MS = 1400;
 // How long a flashed card stays flagged before the flag is cleared, letting
 // a later change re-trigger the animation. Matches TripCard's
-// trip-card-flash duration (1.2s).
-const FLASH_MS = 1200;
+// trip-card-flash duration (2.5s).
+const FLASH_MS = 2500;
 
 type DisplayedTrip = TripWithCounts & { _removing?: boolean };
 
@@ -190,7 +190,7 @@ export function TripsBoard({
         </label>
 
         <label className={labelClass}>
-          Your luggage
+          Your suitcases
           <select
             value={luggage}
             onChange={(e) => setLuggage(Number(e.target.value))}
@@ -198,7 +198,7 @@ export function TripsBoard({
           >
             {LUGGAGE_OPTIONS.map((n) => (
               <option key={n} value={n}>
-                {n} bag{n === 1 ? "" : "s"}
+                {n} suitcase{n === 1 ? "" : "s"}
               </option>
             ))}
           </select>

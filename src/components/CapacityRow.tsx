@@ -22,7 +22,7 @@ export function CapacityRow({
       </span>
       <span className="flex items-center gap-1.5">
         <BriefcaseIcon className="h-4 w-4 text-accent" />
-        {bagsLeft}/{bagCapacity} bags left
+        {bagsLeft}/{bagCapacity} suitcases left
       </span>
     </div>
   );

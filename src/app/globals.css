@@ -45,7 +45,7 @@ body {
 
 @keyframes trip-card-flash {
   0% {
-    background-color: color-mix(in srgb, var(--color-live) 18%, var(--color-background));
+    background-color: color-mix(in srgb, var(--color-live) 32%, var(--color-background));
     border-color: var(--color-live);
   }
   100% {

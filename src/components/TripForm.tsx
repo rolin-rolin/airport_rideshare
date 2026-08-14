@@ -247,7 +247,7 @@ export function TripForm({
         >
           {vehicleTypes.map((v) => (
             <option key={v.id} value={v.id}>
-              {v.name} ({v.default_seat_capacity} seats, {v.default_bag_capacity} bags)
+              {v.name} ({v.default_seat_capacity} seats, {v.default_bag_capacity} suitcases)
             </option>
           ))}
         </select>
@@ -267,7 +267,7 @@ export function TripForm({
         </label>
 
         <label className={`min-w-0 flex-1 ${labelClass}`}>
-          Bag capacity
+          Suitcase capacity
           <input
             type="number"
             name="bag_capacity"
@@ -280,7 +280,7 @@ export function TripForm({
       </div>
 
       <label className={labelClass}>
-        Max luggage per person (optional)
+        Max suitcases per person (optional)
         <input
           type="number"
           name="max_bags_per_person"
@@ -343,7 +343,7 @@ export function TripForm({
       </div>
 
       <label className={labelClass}>
-        Your bag count
+        Your suitcase count
         <input
           type="number"
           name="bag_count"
@@ -352,6 +352,9 @@ export function TripForm({
           onChange={(e) => setBagCount(e.target.value)}
           className={fieldClassFor("bag_count")}
         />
+        <span className="text-label font-body font-normal text-foreground/50">
+          Count whatever you can&apos;t fit on your lap.
+        </span>
       </label>
 
       <div className="rounded-md border border-border p-3">

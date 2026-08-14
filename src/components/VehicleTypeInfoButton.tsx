@@ -24,8 +24,8 @@ function VehicleTypeInfo() {
                 ))}
             </ul>
             <p className="mt-1.5 text-background/90 font-bold">
-                Backpacks and personal items don&apos;t count toward either cap, but each rider should only bring one to
-                keep on their lap.
+                Your suitcase count is whatever you can&apos;t fit on your lap. One personal item
+                (backpack, purse) per rider rides free — a second one counts as a suitcase.
             </p>
         </div>
     );

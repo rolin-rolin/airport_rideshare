@@ -62,7 +62,7 @@ export function TripCard({
         removing
           ? "pointer-events-none animate-[trip-card-exit_0.4s_ease-in_1s_forwards] opacity-50"
           : flash
-            ? "animate-[trip-card-flash_1.2s_ease-out]"
+            ? "animate-[trip-card-flash_2.5s_ease-out]"
             : ""
       } ${blockedReason && !isMine && !removing ? "opacity-50" : ""}`}
     >
@@ -101,7 +101,7 @@ export function TripCard({
 
       {trip.max_bags_per_person != null && (
         <p className="mt-1.5 text-label font-body text-foreground/50">
-          Max {trip.max_bags_per_person} bag{trip.max_bags_per_person === 1 ? "" : "s"} per person
+          Max {trip.max_bags_per_person} suitcase{trip.max_bags_per_person === 1 ? "" : "s"} per person
         </p>
       )}
 

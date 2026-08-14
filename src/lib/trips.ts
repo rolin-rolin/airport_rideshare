@@ -63,7 +63,9 @@ export async function getBoardTrips(direction: Direction): Promise<TripWithCount
 
   const { data: trips, error: tripsError } = await supabase
     .from("trips")
-    .select("*, vehicle_types(name)")
+    .select(
+      "id, direction, departure_time, timezone, pickup_location, dropoff_location, vehicle_type_id, seat_capacity, bag_capacity, max_bags_per_person, estimated_total_cost, status, visibility, created_by, created_at, vehicle_types(name)",
+    )
     .eq("direction", direction)
     .eq("visibility", "public")
     .in("status", ["open", "full"])
@@ -72,6 +74,10 @@ export async function getBoardTrips(direction: Direction): Promise<TripWithCount
   if (tripsError) throw tripsError;
   if (trips.length === 0) return [];
 
+  const typedTrips = trips as unknown as (Trip & {
+    vehicle_types: { name: string } | null;
+  })[];
+
   // No profiles embed: cards show counts, not names, and since 0013 emails
   // resolve only for your own trip-mates anyway.
   const { data: signups, error: signupsError } = await supabase
@@ -79,21 +85,20 @@ export async function getBoardTrips(direction: Direction): Promise<TripWithCount
     .select("id, trip_id, user_id, bag_count, joined_at")
     .in(
       "trip_id",
-      trips.map((t) => t.id),
+      typedTrips.map((t) => t.id),
     )
     .is("left_at", null);
 
   if (signupsError) throw signupsError;
 
   // The board never shows contact info (only a member/the poster is
-  // entitled to see it — see get_trip_for_view, migration 0016), so it's
-  // stripped here rather than merely left unrendered, keeping it out of the
-  // RSC payload shipped to every browsing viewer's client.
-  return trips.map((trip) => ({
-    ...withCounts(trip, signups as unknown as SignupRow[]),
-    contact_method: null,
-    contact_value: null,
-  }));
+  // entitled to see it — see get_trip_for_view, migration 0016). The select
+  // above doesn't even fetch contact_method/contact_value (they're
+  // column-privilege-restricted per migration 0019), so they're filled in
+  // as null here to satisfy the Trip shape.
+  return typedTrips.map((trip) =>
+    withCounts({ ...trip, contact_method: null, contact_value: null }, signups as unknown as SignupRow[]),
+  );
 }
 
 // Exported for unit testing; not otherwise part of the public API surface.
@@ -107,31 +112,6 @@ export function toMembers(signups: SignupRow[]): SignupMember[] {
       joined_at: s.joined_at,
     }))
     .sort((a, b) => a.joined_at.localeCompare(b.joined_at));
-}
-
-// Full roster for a single trip — used on the trip detail view.
-export async function getTripWithMembers(tripId: string): Promise<TripWithMembers | null> {
-  const supabase = await createClient();
-
-  const { data: trip, error: tripError } = await supabase
-    .from("trips")
-    .select("*, vehicle_types(name)")
-    .eq("id", tripId)
-    .maybeSingle();
-
-  if (tripError) throw tripError;
-  if (!trip) return null;
-
-  const { data: signups, error: signupsError } = await supabase
-    .from("signups")
-    .select("id, trip_id, user_id, bag_count, joined_at, profiles(email)")
-    .eq("trip_id", tripId)
-    .is("left_at", null);
-
-  if (signupsError) throw signupsError;
-
-  const rows = signups as unknown as SignupRow[];
-  return { ...withCounts(trip, rows), members: toMembers(rows) };
 }
 
 // Resolves one trip for the detail page, public or private alike.
@@ -187,5 +167,11 @@ export async function getMyActiveTripId(): Promise<string | null> {
 export async function getMyActiveTrip(): Promise<TripWithMembers | null> {
   const tripId = await getMyActiveTripId();
   if (!tripId) return null;
-  return getTripWithMembers(tripId);
+  // Goes through the same RPC as getTripForView rather than a direct trips
+  // select: contact_method/contact_value are column-privilege-restricted
+  // (migration 0019), so only a SECURITY DEFINER function like
+  // get_trip_for_view can read them. Safe to rely on it here even though
+  // it's built for "any viewer" -- the caller is always a member of their
+  // own active trip by construction of getMyActiveTripId.
+  return getTripForView(tripId);
 }

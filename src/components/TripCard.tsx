@@ -26,6 +26,7 @@ export function TripCard({
   canJoin,
   blockedReason = null,
   flash = false,
+  entering = false,
   removing = false,
 }: {
   trip: TripWithCounts;
@@ -34,6 +35,7 @@ export function TripCard({
   canJoin: boolean;
   blockedReason?: string | null;
   flash?: boolean;
+  entering?: boolean;
   removing?: boolean;
 }) {
   // Owned here, one level up from JoinTripButton, so a join failure that
@@ -58,12 +60,14 @@ export function TripCard({
 
   return (
     <div
-      className={`relative rounded-xl border border-border bg-background p-5 transition-colors hover:border-primary/40 animate-[trip-card-enter_0.35s_ease-out] ${
+      className={`relative rounded-xl border border-border bg-background p-5 transition-colors hover:border-primary/40 ${
         removing
           ? "pointer-events-none animate-[trip-card-exit_0.4s_ease-in_1s_forwards] opacity-50"
           : flash
             ? "animate-[trip-card-flash_2.5s_ease-out]"
-            : ""
+            : entering
+              ? "animate-[trip-card-enter_0.35s_ease-out]"
+              : ""
       } ${blockedReason && !isMine && !removing ? "opacity-50" : ""}`}
     >
       {/* Stretched link: covers the card so the whole thing opens the trip

@@ -107,7 +107,7 @@ export default async function TripDetailPage({
 
           {trip.max_bags_per_person != null && (
             <p className="mt-1.5 text-label font-body text-foreground/50">
-              Max {trip.max_bags_per_person} bag
+              Max {trip.max_bags_per_person} suitcase
               {trip.max_bags_per_person === 1 ? "" : "s"} per person
             </p>
           )}
@@ -135,7 +135,7 @@ export default async function TripDetailPage({
                   {m.email}
                   <span className="text-foreground/50">
                     {" "}
-                    &middot; {m.bag_count} bag{m.bag_count === 1 ? "" : "s"}
+                    &middot; {m.bag_count} suitcase{m.bag_count === 1 ? "" : "s"}
                   </span>
                 </li>
               ))}

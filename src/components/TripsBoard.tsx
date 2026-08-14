@@ -20,6 +20,11 @@ const REMOVE_LINGER_MS = 1400;
 // a later change re-trigger the animation. Matches TripCard's
 // trip-card-flash duration (2.5s).
 const FLASH_MS = 2500;
+// How long a card stays flagged as "entering" before the flag is cleared.
+// Matches TripCard's trip-card-enter duration (0.35s) -- only cards flagged
+// here get that animation, so an update to an already-displayed card can't
+// retrigger it (see below).
+const ENTER_MS = 350;
 
 type DisplayedTrip = TripWithCounts & { _removing?: boolean };
 
@@ -38,24 +43,55 @@ export function TripsBoard({
 
   const [displayed, setDisplayed] = useState<DisplayedTrip[]>(trips);
   const [flashIds, setFlashIds] = useState<Set<string>>(new Set());
+  // Cards currently playing the enter animation -- the initial board's own
+  // trips count as "entering" too (a fresh page load is a fresh mount for
+  // all of them), set below in the mount-only effect.
+  const [enterIds, setEnterIds] = useState<Set<string>>(new Set());
   const prevCounts = useRef<Map<string, { seats_filled: number; bags_filled: number }>>(
     new Map(trips.map((t) => [t.id, { seats_filled: t.seats_filled, bags_filled: t.bags_filled }])),
   );
   const removeTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const flashTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const enterTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   useEffect(() => {
     const removeTimersMap = removeTimers.current;
     const flashTimersMap = flashTimers.current;
+    const enterTimersMap = enterTimers.current;
     return () => {
       removeTimersMap.forEach((t) => clearTimeout(t));
       flashTimersMap.forEach((t) => clearTimeout(t));
+      enterTimersMap.forEach((t) => clearTimeout(t));
     };
+  }, []);
+
+  // Flags the initial trips as "entering" once, on mount, so the board's
+  // first paint still gets the same fade-in every card gets when it's
+  // genuinely added later (see the trips-diffing effect below).
+  useEffect(() => {
+    const ids = trips.map((t) => t.id);
+    setEnterIds(new Set(ids));
+    for (const id of ids) {
+      const timer = setTimeout(() => {
+        enterTimers.current.delete(id);
+        setEnterIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      }, ENTER_MS);
+      enterTimers.current.set(id, timer);
+    }
+    // Mount-only: later trips arriving via props are handled by the
+    // trips-diffing effect instead, which can tell new ids apart from
+    // updates to ones already on the board.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     const incomingIds = new Set(trips.map((t) => t.id));
     const newlyFlashed: string[] = [];
+    const newlyEntering: string[] = [];
 
     setDisplayed((prev) => {
       const next: DisplayedTrip[] = [];
@@ -108,6 +144,7 @@ export function TripsBoard({
             seats_filled: trip.seats_filled,
             bags_filled: trip.bags_filled,
           });
+          newlyEntering.push(trip.id);
           next.push(trip);
         }
       }
@@ -139,6 +176,23 @@ export function TripsBoard({
           });
         }, FLASH_MS);
         flashTimers.current.set(id, timer);
+      }
+    }
+
+    if (newlyEntering.length > 0) {
+      setEnterIds((prev) => new Set([...prev, ...newlyEntering]));
+      for (const id of newlyEntering) {
+        const existing = enterTimers.current.get(id);
+        if (existing) clearTimeout(existing);
+        const timer = setTimeout(() => {
+          enterTimers.current.delete(id);
+          setEnterIds((prev) => {
+            const next = new Set(prev);
+            next.delete(id);
+            return next;
+          });
+        }, ENTER_MS);
+        enterTimers.current.set(id, timer);
       }
     }
   }, [trips]);
@@ -223,6 +277,7 @@ export function TripsBoard({
                 canJoin={!myActiveTrip && trip.status === "open" && reason === null}
                 blockedReason={reason}
                 flash={flashIds.has(trip.id)}
+                entering={enterIds.has(trip.id)}
                 removing={trip._removing}
               />
             );

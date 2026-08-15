@@ -8,8 +8,8 @@ export default function LoginPage() {
           Down to Split?
         </h1>
         <p className="mb-6 text-body font-body text-foreground/70">
-          Find other ND students to rideshare with — and put a little extra
-          money back in your pocket.
+          Find other ND students to rideshare with back from/to the airport!
+          And put a little extra money back in your pocket.
         </p>
 
         <form action={signInWithGoogle}>

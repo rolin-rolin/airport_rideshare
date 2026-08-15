@@ -12,6 +12,16 @@ EMAIL="${1:-testuser1@nd.edu}"
 
 mkdir -p "$RUNTIME_DIR"
 
+# supabase start doesn't auto-load .env.local/.env.development.local (that's
+# a Next.js-only convention) but config.toml's env() substitutions (e.g.
+# Google OAuth) need these set in the shell. Next.js precedence:
+# .env.development.local overrides .env.local, so source it second (source
+# overwrites, unlike Next.js's "first one wins" env loading).
+set -a
+[ -f .env.local ] && source .env.local
+[ -f .env.development.local ] && source .env.development.local
+set +a
+
 echo "==> Starting local Supabase..."
 supabase start
 

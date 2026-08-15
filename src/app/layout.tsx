@@ -16,8 +16,8 @@ const publicSans = Public_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Campus Airport Rideshare",
-  description: "Find other students heading to the airport at the same time.",
+  title: "Down to Split",
+  description: "Find other ND students heading to the airport at the same time.",
 };
 
 export default function RootLayout({

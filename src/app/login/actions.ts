@@ -1,34 +1,25 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 
-const ALLOWED_EMAIL_DOMAIN = process.env.ALLOWED_EMAIL_DOMAIN!;
-
-export async function sendMagicLink(
-  _prevState: { error: string | null; sent: boolean },
-  formData: FormData,
-) {
-  const email = String(formData.get("email") ?? "").trim();
-
-  const domain = email.split("@")[1]?.toLowerCase();
-  if (domain !== ALLOWED_EMAIL_DOMAIN) {
-    return {
-      error: `Please use your school email address (@${ALLOWED_EMAIL_DOMAIN}).`,
-      sent: false,
-    };
-  }
-
+export async function signInWithGoogle() {
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/callback`,
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/callback`,
+      // Pre-filters Google's account chooser to nd.edu accounts. This is a
+      // hint only, not enforcement -- the callback route re-checks the
+      // domain server-side since a crafted authorize URL can omit it.
+      queryParams: { hd: "nd.edu" },
     },
   });
 
-  if (error) {
-    return { error: error.message, sent: false };
+  if (error || !data.url) {
+    redirect("/auth/auth-code-error");
   }
 
-  return { error: null, sent: true };
+  redirect(data.url);
 }

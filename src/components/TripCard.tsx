@@ -8,6 +8,7 @@ import { CapacityRow } from "@/components/CapacityRow";
 import { JoinTripButton } from "@/components/JoinTripButton";
 import { TripPricing } from "@/components/TripPricing";
 import { VehicleTypeInfoButton } from "@/components/VehicleTypeInfoButton";
+import { Tooltip } from "@/components/Tooltip";
 import { formatTripDate, formatTripTime } from "@/components/FormattedTripTime";
 
 // How long a join failure stays visible after it's reported. Long enough to
@@ -16,7 +17,7 @@ const JOIN_ERROR_LINGER_MS = 8000;
 
 const DIRECTION_LABEL: Record<Direction, string> = {
   to_airport: "Leaves campus",
-  from_airport: "Leaves airport",
+  from_airport: "Leaves airport/station",
 };
 
 export function TripCard({
@@ -85,7 +86,7 @@ export function TripCard({
       </p>
 
       <div className="relative z-10 mt-1 flex items-end justify-between gap-3">
-        <span className="text-time font-display font-bold text-foreground">
+        <span className="text-price sm:text-display-lg font-display font-bold text-foreground">
           {formatTripDate(trip.departure_time, trip.timezone)} @{" "}
           {formatTripTime(trip.departure_time, trip.timezone)}
         </span>
@@ -126,12 +127,14 @@ export function TripCard({
             Your trip
           </span>
         ) : blockedReason ? (
-          <span
-            title={blockedReason}
-            className="shrink-0 text-label font-display font-semibold text-foreground/40"
-          >
-            Won&apos;t fit
-          </span>
+          <Tooltip content={<p className="text-background/90">{blockedReason}</p>}>
+            <button
+              type="button"
+              className="shrink-0 cursor-help text-label font-display font-semibold text-foreground/40"
+            >
+              Won&apos;t fit
+            </button>
+          </Tooltip>
         ) : canJoin ? (
           <JoinTripButton trip={trip} onError={handleJoinError} />
         ) : trip.status === "full" ? (

@@ -13,9 +13,13 @@ BEGIN;
 SELECT plan(16);
 
 -- Shared fixtures: two users, one vehicle type, reused across both cases.
+-- Emails are namespaced (tct- prefix, matching create_trip_with_signup_test's
+-- ctws- prefix) so they can't collide with a real auth.users row created
+-- outside this transaction -- e.g. via scripts/dev-magic-link.mjs, whose
+-- default example emails are exactly user1@nd.edu / user2@nd.edu.
 insert into auth.users (id, email) values
-  ('11111111-1111-1111-1111-111111111111', 'user1@nd.edu'),
-  ('22222222-2222-2222-2222-222222222222', 'user2@nd.edu');
+  ('11111111-1111-1111-1111-111111111111', 'tct-user1@nd.edu'),
+  ('22222222-2222-2222-2222-222222222222', 'tct-user2@nd.edu');
 
 -- ============================================================
 -- Case 1: expired (cron-driven, departure_time > 1hr in the past)
@@ -159,8 +163,8 @@ SELECT is(
 -- ============================================================
 
 insert into auth.users (id, email) values
-  ('33333333-3333-3333-3333-333333333333', 'user3@nd.edu'),
-  ('44444444-4444-4444-4444-444444444444', 'user4@nd.edu');
+  ('33333333-3333-3333-3333-333333333333', 'tct-user3@nd.edu'),
+  ('44444444-4444-4444-4444-444444444444', 'tct-user4@nd.edu');
 
 insert into public.trips
   (id, direction, departure_time, pickup_location, dropoff_location,

@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { createTrip } from "@/app/dashboard/actions";
 import type { ContactMethod, Direction, VehicleType } from "@/lib/types";
 import { TIMEZONE_OPTIONS, zonedDateTimeLocalToUtcIso, type TripTimezone } from "@/lib/timezone";
+import { VehicleTypeSelectInfoButton } from "@/components/VehicleTypeSelectInfoButton";
 
 const CONTACT_METHOD_OPTIONS: { value: ContactMethod; label: string; inputType: string; placeholder: string }[] = [
   { value: "phone", label: "Phone number", inputType: "tel", placeholder: "(555) 123-4567" },
@@ -238,7 +239,10 @@ export function TripForm({
       />
 
       <label className={labelClass}>
-        Vehicle type
+        <span className="flex items-center gap-1.5">
+          Vehicle type
+          <VehicleTypeSelectInfoButton />
+        </span>
         <select
           name="vehicle_type_id"
           value={vehicleTypeId}

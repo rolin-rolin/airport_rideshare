@@ -583,8 +583,8 @@ reset request.jwt.claims;
 
 SELECT throws_ok(
   $$ select public.create_trip_with_signup(
-       'to_airport', now() + interval '2 hours', 'Dorm', 'Airport',
-       null, 4, 2, 40, null, 1
+       'to_airport', now() + interval '2 hours', 'America/Chicago', 'Dorm', 'Airport',
+       null, 4, 2, 40, null, null, 1
      ) $$,
   'P0001',
   'Not authenticated',

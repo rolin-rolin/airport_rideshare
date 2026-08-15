@@ -3,31 +3,11 @@
 import { InfoIcon } from "@/components/icons";
 import { Tooltip } from "@/components/Tooltip";
 
-// Kept in one place — DESIGN.md §4.2's tier table is the source of truth,
-// condensed here for an at-a-glance tooltip rather than the full rationale.
-const VEHICLE_TIERS = [
-    { name: "Standard (UberX / Lyft)", detail: "4 seats, ~2 suitcases" },
-    { name: "XL (UberXL / Lyft XL)", detail: "6 seats, ~4-5 suitcases" },
-    { name: "XXL (UberXXL / Lyft XXL)", detail: "6 seats, 6+ suitcases, guaranteed trunk space" },
-];
-
 function VehicleTypeInfo() {
     return (
-        <div>
-            <p className="text-background/80">Vehicle tiers are based on Uber/Lyft vehicle sizes:</p>
-            <ul className="mt-1.5 space-y-1">
-                {VEHICLE_TIERS.map((tier) => (
-                    <li key={tier.name}>
-                        <span className="font-semibold">{tier.name}:</span>{" "}
-                        <span className="text-background/80">{tier.detail}</span>
-                    </li>
-                ))}
-            </ul>
-            <p className="mt-1.5 text-background/90 font-bold">
-                Your suitcase count is whatever you can&apos;t fit on your lap. One personal item
-                (backpack, purse) per rider rides free — a second one counts as a suitcase.
-            </p>
-        </div>
+        <p className="text-background/90">
+            Anything you can&apos;t fit on your lap counts towards the suitcase count.
+        </p>
     );
 }
 

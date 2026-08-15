@@ -8,8 +8,14 @@ import { JoinTripButton } from "@/components/JoinTripButton";
 import { TripPricing } from "@/components/TripPricing";
 import { VehicleTypeInfoButton } from "@/components/VehicleTypeInfoButton";
 import { CopyTripLinkButton } from "@/components/CopyTripLinkButton";
-import { FormattedTripDate, FormattedTripTime } from "@/components/FormattedTripTime";
-import { TripViewRealtimeFlash } from "@/components/TripViewRealtimeFlash";
+import {
+  FormattedTripDate,
+  FormattedTripTime,
+} from "@/components/FormattedTripTime";
+import {
+  TripViewRealtimeFlash,
+  FlashCard,
+} from "@/components/TripViewRealtimeFlash";
 
 const DIRECTION_LABEL = {
   to_airport: "Leaves campus at",
@@ -71,92 +77,111 @@ export default async function TripDetailPage({
         bagsFilled={trip.bags_filled}
         memberCount={trip.members.length}
         status={trip.status}
+        skipSubscribe={myActiveTrip?.id === trip.id}
       >
-        <div className="rounded-xl border border-border bg-background p-5">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-label font-body text-foreground/50">
-                {DIRECTION_LABEL[trip.direction]}
-              </p>
-              <p className="mt-1 text-time font-display font-bold text-foreground">
-                <FormattedTripDate iso={trip.departure_time} timeZone={trip.timezone} /> @{" "}
-                <FormattedTripTime iso={trip.departure_time} timeZone={trip.timezone} />
-              </p>
+        <>
+          <FlashCard className="rounded-xl border border-border bg-background p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-label font-body text-foreground/50">
+                  {DIRECTION_LABEL[trip.direction]}
+                </p>
+                <p className="mt-1 text-time font-display font-bold text-foreground">
+                  <FormattedTripDate
+                    iso={trip.departure_time}
+                    timeZone={trip.timezone}
+                  />{" "}
+                  @{" "}
+                  <FormattedTripTime
+                    iso={trip.departure_time}
+                    timeZone={trip.timezone}
+                  />
+                </p>
+              </div>
+              {trip.visibility === "private" && (
+                <span className="shrink-0 rounded-full bg-accent/15 px-3 py-1 text-label font-display font-semibold text-accent">
+                  Private
+                </span>
+              )}
             </div>
-            {trip.visibility === "private" && (
-              <span className="shrink-0 rounded-full bg-accent/15 px-3 py-1 text-label font-display font-semibold text-accent">
-                Private
-              </span>
+
+            <div className="mt-4">
+              <RouteDisplay
+                pickup={trip.pickup_location}
+                dropoff={trip.dropoff_location}
+              />
+            </div>
+
+            <div className="mt-4">
+              <TripPricing trip={trip} includeViewer={!isMember} />
+            </div>
+
+            {trip.vehicle_type_name && (
+              <p className="mt-4 flex items-center gap-1.5 text-label font-display font-semibold text-accent">
+                {trip.vehicle_type_name}
+                <VehicleTypeInfoButton />
+              </p>
             )}
-          </div>
 
-          <div className="mt-4">
-            <RouteDisplay pickup={trip.pickup_location} dropoff={trip.dropoff_location} />
-          </div>
+            {trip.max_bags_per_person != null && (
+              <p className="mt-1.5 text-label font-body text-foreground/50">
+                Max {trip.max_bags_per_person} suitcase
+                {trip.max_bags_per_person === 1 ? "" : "s"} per person
+              </p>
+            )}
 
-          <div className="mt-4">
-            <TripPricing trip={trip} includeViewer={!isMember} />
-          </div>
+            <div className="mt-1.5">
+              <CapacityRow
+                seatsFilled={trip.seats_filled}
+                seatCapacity={trip.seat_capacity}
+                bagsFilled={trip.bags_filled}
+                bagCapacity={trip.bag_capacity}
+              />
+            </div>
+          </FlashCard>
 
-          {trip.vehicle_type_name && (
-            <p className="mt-4 flex items-center gap-1.5 text-label font-display font-semibold text-accent">
-              {trip.vehicle_type_name}
-              <VehicleTypeInfoButton />
-            </p>
-          )}
+          <FlashCard className="rounded-xl border border-border bg-background p-5">
+            <h2 className="text-label font-display font-semibold uppercase tracking-wide text-foreground/50">
+              Riders
+            </h2>
+            {trip.members.length === 0 ? (
+              <p className="mt-2 text-body font-body text-foreground/50">
+                No riders yet.
+              </p>
+            ) : (
+              <ul className="mt-2 flex flex-col gap-1">
+                {trip.members.map((m) => (
+                  <li
+                    key={m.id}
+                    className="text-body font-body text-foreground"
+                  >
+                    {m.email}
+                    <span className="text-foreground/50">
+                      {" "}
+                      &middot; {m.bag_count} suitcase
+                      {m.bag_count === 1 ? "" : "s"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
 
-          {trip.max_bags_per_person != null && (
-            <p className="mt-1.5 text-label font-body text-foreground/50">
-              Max {trip.max_bags_per_person} suitcase
-              {trip.max_bags_per_person === 1 ? "" : "s"} per person
-            </p>
-          )}
-
-          <div className="mt-1.5">
-            <CapacityRow
-              seatsFilled={trip.seats_filled}
-              seatCapacity={trip.seat_capacity}
-              bagsFilled={trip.bags_filled}
-              bagCapacity={trip.bag_capacity}
-            />
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-border bg-background p-5">
-          <h2 className="text-label font-display font-semibold uppercase tracking-wide text-foreground/50">
-            Riders
-          </h2>
-          {trip.members.length === 0 ? (
-            <p className="mt-2 text-body font-body text-foreground/50">No riders yet.</p>
-          ) : (
-            <ul className="mt-2 flex flex-col gap-1">
-              {trip.members.map((m) => (
-                <li key={m.id} className="text-body font-body text-foreground">
-                  {m.email}
-                  <span className="text-foreground/50">
-                    {" "}
-                    &middot; {m.bag_count} suitcase{m.bag_count === 1 ? "" : "s"}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {isMember && trip.contact_method && trip.contact_value && (
-            <p className="mt-3 border-t border-border pt-3 text-body font-body text-foreground">
-              {CONTACT_VERB[trip.contact_method]}{" "}
-              <a
-                href={CONTACT_HREF[trip.contact_method](trip.contact_value)}
-                target="_blank"
-                rel="noreferrer"
-                className="font-semibold text-primary underline"
-              >
-                {trip.contact_value}
-              </a>{" "}
-              to coordinate
-            </p>
-          )}
-        </div>
+            {isMember && trip.contact_method && trip.contact_value && (
+              <p className="mt-3 border-t border-border pt-3 text-body font-body text-foreground">
+                {CONTACT_VERB[trip.contact_method]}{" "}
+                <a
+                  href={CONTACT_HREF[trip.contact_method](trip.contact_value)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-semibold text-primary underline"
+                >
+                  {trip.contact_value}
+                </a>{" "}
+                to coordinate
+              </p>
+            )}
+          </FlashCard>
+        </>
       </TripViewRealtimeFlash>
 
       {/* Join states. Capacity never hides the panel — the rider hasn't said
@@ -170,7 +195,8 @@ export default async function TripDetailPage({
           </p>
         ) : trip.status === "expired" ? (
           <p className="text-body font-body text-foreground/50">
-            This trip expired &mdash; trips expire an hour after the set departure time.
+            This trip expired &mdash; trips expire an hour after the set
+            departure time.
           </p>
         ) : trip.status === "abandoned" ? (
           <p className="text-body font-body text-foreground/50">
@@ -178,11 +204,13 @@ export default async function TripDetailPage({
           </p>
         ) : inAnotherTrip ? (
           <p className="text-body font-body text-foreground/50">
-            You&apos;re already in a trip. Leave your current trip before joining
-            this one.
+            You&apos;re already in a trip. Leave your current trip before
+            joining this one.
           </p>
         ) : trip.status === "full" ? (
-          <p className="text-body font-body text-foreground/50">This trip is full.</p>
+          <p className="text-body font-body text-foreground/50">
+            This trip is full.
+          </p>
         ) : (
           <JoinTripButton trip={trip} defaultOpen />
         )}

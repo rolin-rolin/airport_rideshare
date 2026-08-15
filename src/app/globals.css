@@ -54,6 +54,48 @@ body {
   }
 }
 
+/* Idle-state "this is live" cue for GroupStatusFlash -- gently breathes
+   between the banner's resting tint and a darker one so an otherwise-static
+   bar still reads as connected to realtime. Shares its color ramp (10%-26%
+   live-green) with trip-banner-flash below, just at a lower peak -- an
+   update should read as more intense than ordinary breathing, not the same
+   intensity on a different schedule. */
+@keyframes trip-banner-pulse {
+  0%,
+  100% {
+    background-color: color-mix(in srgb, var(--color-live) 10%, var(--color-background));
+  }
+  50% {
+    background-color: color-mix(in srgb, var(--color-live) 26%, var(--color-background));
+  }
+}
+
+/* An update jumps to a peak darker than trip-banner-pulse's own (42% vs.
+   26%) so it's unmistakably a distinct event, and takes 1.5s to fall to the
+   pulse's peak level before continuing on -- deliberately longer than a
+   plain fall so it stays legible instead of reading as a blip.
+   That 33.33%-100% stretch is not just any fall to the trough: at 4.5s
+   total duration, it's exactly 3s, i.e. identical in duration, endpoints,
+   and (per CSS's per-segment default timing-function) easing shape to
+   trip-banner-pulse's own 50%-100% falling half. So from the moment this
+   color passes 26%, it is that fall, just entered a beat early -- the
+   handoff to the looping pulse afterward matches not just color but
+   velocity, with no seam. Keep 33.33% (= 1.5s / 4.5s) and FLASH_MS
+   (GroupStatusFlash.tsx) in sync if either duration changes. */
+@keyframes trip-banner-flash {
+  0% {
+    background-color: color-mix(in srgb, var(--color-live) 42%, var(--color-background));
+    border-color: var(--color-live);
+  }
+  33.33% {
+    background-color: color-mix(in srgb, var(--color-live) 26%, var(--color-background));
+  }
+  100% {
+    background-color: color-mix(in srgb, var(--color-live) 10%, var(--color-background));
+    border-color: var(--color-border);
+  }
+}
+
 @keyframes trip-card-exit {
   from {
     opacity: 0.5;

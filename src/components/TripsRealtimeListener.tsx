@@ -45,14 +45,24 @@ export function TripsRealtimeListener({ activeTripId }: { activeTripId: string |
   }, [pathname]);
 
   // Coalesce bursts of change events (e.g. a cron sweep expiring several
-  // trips at once) into a single refresh rather than one per row. Shared
-  // across both channels below so a board ping and a trip ping arriving
-  // together still only trigger one refresh.
+  // trips at once, or one action -- like leaving a trip -- pinging both the
+  // board-public and trip:<id> topics) into a single refresh. The pending-
+  // timer check alone only catches broadcasts that arrive *while a refresh
+  // is already scheduled*; a straggler ping for the same underlying change
+  // arriving just after that timer already fired (board and trip topics
+  // aren't guaranteed to be delivered together) would still schedule a
+  // second, redundant router.refresh() -- harmless on its own, but each one
+  // is a fresh "did anything change" render that flash-on-change UI
+  // (GroupStatusFlash, TripViewRealtimeFlash) reads as its own event. The
+  // cooldown below also swallows those for a beat after a refresh fires.
   const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cooldownUntilRef = useRef(0);
   const scheduleRefresh = useCallback(() => {
     if (refreshTimeoutRef.current) return;
+    if (Date.now() < cooldownUntilRef.current) return;
     refreshTimeoutRef.current = setTimeout(() => {
       refreshTimeoutRef.current = null;
+      cooldownUntilRef.current = Date.now() + 1000;
       if (REALTIME_REFRESH_EXCLUDED_PATHS.includes(pathnameRef.current)) return;
       router.refresh();
     }, 300);
@@ -136,7 +146,7 @@ export function TripsRealtimeListener({ activeTripId }: { activeTripId: string |
     <div
       role="status"
       aria-live="polite"
-      className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-2"
+      className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-2"
     >
       <div className="rounded-full border border-border bg-background px-3 py-1 text-label font-body text-accent shadow-sm">
         Reconnecting…

@@ -28,8 +28,8 @@ reset request.jwt.claims;
 
 SELECT throws_ok(
   $$ select public.create_trip_with_signup(
-       'to_airport', now() + interval '2 hours', 'Dorm', 'Airport',
-       null, 4, 2, 40, null, 1
+       'to_airport', now() + interval '2 hours', 'America/Chicago', 'Dorm', 'Airport',
+       null, 4, 2, 40, null, null, 1
      ) $$,
   'P0001',
   'Not authenticated',
@@ -47,8 +47,8 @@ set local request.jwt.claims = '{"sub": "e1111111-1111-1111-1111-111111111111", 
 
 create temporary table ctws_result as
 select public.create_trip_with_signup(
-  'to_airport', now() + interval '2 hours', 'Dorm', 'Airport',
-  null, 4, 2, 40, null, 1
+  'to_airport', now() + interval '2 hours', 'America/Chicago', 'Dorm', 'Airport',
+  null, 4, 2, 40, null, null, 1
 ) as trip_id;
 
 SELECT ok(
@@ -95,8 +95,8 @@ set local request.jwt.claims = '{"sub": "e2222222-2222-2222-2222-222222222222", 
 
 SELECT throws_ok(
   $$ select public.create_trip_with_signup(
-       'to_airport', now() + interval '2 hours', 'Dorm', 'Airport',
-       null, 4, 2, 40, null, 1
+       'to_airport', now() + interval '2 hours', 'America/Chicago', 'Dorm', 'Airport',
+       null, 4, 2, 40, null, null, 1
      ) $$,
   '23505',
   'duplicate key value violates unique constraint "signups_one_active_per_user"',
@@ -127,8 +127,8 @@ set local request.jwt.claims = '{"sub": "e4444444-4444-4444-4444-444444444444", 
 
 SELECT throws_ok(
   $$ select public.create_trip_with_signup(
-       'to_airport', now() + interval '2 hours', 'Dorm', 'Airport',
-       null, 4, 2, 40, null, 3
+       'to_airport', now() + interval '2 hours', 'America/Chicago', 'Dorm', 'Airport',
+       null, 4, 2, 40, null, null, 3
      ) $$,
   'P0001',
   'This trip is full: not enough bag capacity remaining.',
@@ -157,8 +157,8 @@ set local request.jwt.claims = '{"sub": "e5555555-5555-5555-5555-555555555555", 
 
 create temporary table ctws_vt as
 select public.create_trip_with_signup(
-  'from_airport', now() + interval '4 hours', 'Airport', 'Dorm',
-  (select id from public.vehicle_types where name = 'XL'), 6, 4, 60, null, 2
+  'from_airport', now() + interval '4 hours', 'America/Chicago', 'Airport', 'Dorm',
+  (select id from public.vehicle_types where name = 'XL'), 6, 4, 60, null, null, 2
 ) as trip_id;
 
 SELECT is(
@@ -185,8 +185,8 @@ set local request.jwt.claims = '{"sub": "e6666666-6666-6666-6666-666666666666", 
 
 create temporary table ctws_cap as
 select public.create_trip_with_signup(
-  'to_airport', now() + interval '2 hours', 'Dorm', 'Airport',
-  null, 4, 8, 40, null, 1, 2
+  'to_airport', now() + interval '2 hours', 'America/Chicago', 'Dorm', 'Airport',
+  null, 4, 8, 40, null, null, 1, 2
 ) as trip_id;
 
 SELECT is(
@@ -205,8 +205,8 @@ set local request.jwt.claims = '{"sub": "e7777777-7777-7777-7777-777777777777", 
 
 SELECT throws_ok(
   $$ select public.create_trip_with_signup(
-       'to_airport', now() + interval '2 hours', 'Dorm', 'Airport',
-       null, 4, 8, 40, null, 3, 2
+       'to_airport', now() + interval '2 hours', 'America/Chicago', 'Dorm', 'Airport',
+       null, 4, 8, 40, null, null, 3, 2
      ) $$,
   'P0001',
   'This trip limits riders to 2 bag(s) each.',
@@ -236,8 +236,8 @@ set local request.jwt.claims = '{"sub": "e8888888-8888-8888-8888-888888888888", 
 
 create temporary table ctws_default_vis as
 select public.create_trip_with_signup(
-  'to_airport', now() + interval '2 hours', 'Dorm', 'Airport',
-  null, 4, 8, 40, null, 1
+  'to_airport', now() + interval '2 hours', 'America/Chicago', 'Dorm', 'Airport',
+  null, 4, 8, 40, null, null, 1
 ) as trip_id;
 
 SELECT is(
@@ -253,8 +253,8 @@ set local request.jwt.claims = '{"sub": "e9999999-9999-9999-9999-999999999999", 
 
 create temporary table ctws_private as
 select public.create_trip_with_signup(
-  'to_airport', now() + interval '2 hours', 'Dorm', 'Airport',
-  null, 4, 8, 40, null, 1, null, 'private'
+  'to_airport', now() + interval '2 hours', 'America/Chicago', 'Dorm', 'Airport',
+  null, 4, 8, 40, null, null, 1, null, 'private'
 ) as trip_id;
 
 SELECT is(
@@ -283,8 +283,8 @@ set local request.jwt.claims = '{"sub": "e8888888-8888-8888-8888-888888888888", 
 
 SELECT throws_ok(
   $$ select public.create_trip_with_signup(
-       'to_airport', now() + interval '2 hours', 'Dorm', 'Airport',
-       null, 4, 8, 40, null, 1, null, 'unlisted'
+       'to_airport', now() + interval '2 hours', 'America/Chicago', 'Dorm', 'Airport',
+       null, 4, 8, 40, null, null, 1, null, 'unlisted'
      ) $$,
   '23514',
   'new row for relation "trips" violates check constraint "trips_visibility_check"',

@@ -277,7 +277,12 @@ export function TripsBoard({
                 trip={trip}
                 direction={direction}
                 isMine={isMine}
-                canJoin={!myActiveTrip && trip.status === "open" && reason === null}
+                canJoin={
+                  !myActiveTrip &&
+                  trip.seats_filled < trip.seat_capacity &&
+                  reason === null
+                }
+                luggage={luggage}
                 blockedReason={reason}
                 flash={flashIds.has(trip.id)}
                 entering={enterIds.has(trip.id)}

@@ -1,19 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
 import type { Direction, TripWithCounts } from "@/lib/types";
 import { RouteDisplay } from "@/components/RouteDisplay";
 import { CapacityRow } from "@/components/CapacityRow";
-import { JoinTripButton } from "@/components/JoinTripButton";
 import { TripPricing } from "@/components/TripPricing";
 import { VehicleTypeInfoButton } from "@/components/VehicleTypeInfoButton";
 import { Tooltip } from "@/components/Tooltip";
 import { formatTripDate, formatTripTime } from "@/components/FormattedTripTime";
-
-// How long a join failure stays visible after it's reported. Long enough to
-// read, short enough not to stick around forever once it's stale.
-const JOIN_ERROR_LINGER_MS = 8000;
 
 const DIRECTION_LABEL: Record<Direction, string> = {
   to_airport: "Leaves campus",
@@ -25,6 +19,7 @@ export function TripCard({
   direction,
   isMine,
   canJoin,
+  luggage = 0,
   blockedReason = null,
   flash = false,
   entering = false,
@@ -34,31 +29,15 @@ export function TripCard({
   direction: Direction;
   isMine: boolean;
   canJoin: boolean;
+  // The count picked in the board's "Your suitcases" filter, carried over
+  // as a query param so the trip detail page's join form opens pre-filled
+  // instead of asking the rider to re-enter it.
+  luggage?: number;
   blockedReason?: string | null;
   flash?: boolean;
   entering?: boolean;
   removing?: boolean;
 }) {
-  // Owned here, one level up from JoinTripButton, so a join failure that
-  // arrives the same tick as a realtime "trip is now full" refresh (which
-  // flips canJoin false and unmounts JoinTripButton before its own local
-  // error state ever renders) still gets shown. TripCard itself doesn't
-  // unmount when canJoin flips, only the button inside it does.
-  const [joinError, setJoinError] = useState<string | null>(null);
-  const joinErrorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (joinErrorTimer.current) clearTimeout(joinErrorTimer.current);
-    };
-  }, []);
-
-  function handleJoinError(error: string) {
-    setJoinError(error);
-    if (joinErrorTimer.current) clearTimeout(joinErrorTimer.current);
-    joinErrorTimer.current = setTimeout(() => setJoinError(null), JOIN_ERROR_LINGER_MS);
-  }
-
   return (
     <div
       className={`relative rounded-xl border border-border bg-background p-5 transition-colors hover:border-primary/40 ${
@@ -140,17 +119,18 @@ export function TripCard({
             </button>
           </Tooltip>
         ) : canJoin ? (
-          <JoinTripButton trip={trip} onError={handleJoinError} />
+          <Link
+            href={`/dashboard/trips/${trip.id}?bags=${luggage}`}
+            className="shrink-0 rounded-full bg-primary px-4 py-1.5 text-label font-display font-semibold text-background transition-colors hover:bg-primary/90"
+          >
+            Join
+          </Link>
         ) : trip.status === "full" ? (
           <span className="shrink-0 text-label font-display font-semibold text-foreground/40">
             Full
           </span>
         ) : null}
       </div>
-
-      {joinError && !isMine && !removing && (
-        <p className="relative z-10 mt-1.5 text-label font-body text-red-700">{joinError}</p>
-      )}
     </div>
   );
 }

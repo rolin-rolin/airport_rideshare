@@ -17,10 +17,15 @@ import type { TripWithCounts } from "@/lib/types";
 export function JoinTripButton({
   trip,
   defaultOpen = false,
+  defaultBagCount,
   onError,
 }: {
   trip: TripWithCounts;
   defaultOpen?: boolean;
+  // Pre-fills the suitcase input, e.g. with the count the rider already
+  // picked in the board's "Your suitcases" filter before following the
+  // Join link over to this trip's detail page.
+  defaultBagCount?: number;
   // Called the instant joinTrip resolves with an error, in addition to (not
   // instead of) this component's own local `error` state below. A losing
   // bid for the last seat can resolve at the same tick as the realtime
@@ -32,14 +37,15 @@ export function JoinTripButton({
   // hang onto it and keep the message visible after we're gone.
   onError?: (error: string) => void;
 }) {
+  const maxBags = maxBagsForRider(trip);
   const [open, setOpen] = useState(defaultOpen);
-  const [bagCount, setBagCount] = useState("0");
+  const [bagCount, setBagCount] = useState(
+    defaultBagCount != null ? String(Math.min(Math.max(defaultBagCount, 0), Math.max(maxBags, 0))) : "0",
+  );
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const reason = blockedReason(trip, Number(bagCount) || 0);
-
-  const maxBags = maxBagsForRider(trip);
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();

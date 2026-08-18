@@ -39,10 +39,15 @@ const CONTACT_VERB = {
 // only in not being listed, so it must not get its own join flow.
 export default async function TripDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ bags?: string }>;
 }) {
   const { id } = await params;
+  const { bags } = await searchParams;
+  const parsedBags = bags != null ? Number(bags) : NaN;
+  const defaultBagCount = Number.isFinite(parsedBags) ? parsedBags : undefined;
 
   const supabase = await createClient();
   const {
@@ -217,12 +222,12 @@ export default async function TripDetailPage({
             You&apos;re already in a trip. Leave your current trip before
             joining this one.
           </p>
-        ) : trip.status === "full" ? (
+        ) : trip.seats_filled >= trip.seat_capacity ? (
           <p className="text-body font-body text-foreground/50">
             This trip is full.
           </p>
         ) : (
-          <JoinTripButton trip={trip} defaultOpen />
+          <JoinTripButton trip={trip} defaultOpen defaultBagCount={defaultBagCount} />
         )}
 
         {isPoster && trip.visibility === "private" && (

@@ -1,7 +1,7 @@
 "use client";
 
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export const TooltipProvider = TooltipPrimitive.Provider;
 
@@ -16,20 +16,36 @@ export function Tooltip({
   // handling explicitly ignores touch pointers (no hover-equivalent on
   // mobile), and its default click handler always *closes* the tooltip --
   // which stomps on a tap that just opened it via focus. Taking over
-  // open/close here (and preventing default on pointerdown/click so those
-  // built-in handlers don't fight us) makes tap-to-toggle work on touch
-  // while leaving desktop hover untouched. Outside-tap-to-dismiss still
-  // works for free via Radix's DismissableLayer on the content.
+  // open/close here makes tap-to-toggle work on touch while leaving desktop
+  // hover untouched. Outside-tap-to-dismiss still works for free via
+  // Radix's DismissableLayer on the content.
+  //
+  // A tap also fires a `focus` event before `click`, and Radix's own
+  // onFocus handler auto-opens the tooltip (skipped only if its internal
+  // onPointerDown handler already ran) -- so a naive preventDefault on our
+  // onPointerDown blocks *that* bookkeeping too, leaving Radix's onFocus
+  // free to auto-open right before our onClick toggle flips it straight
+  // back closed on the very first tap. Tracking the pointerdown ourselves
+  // (without preventing it) and only suppressing focus-driven auto-open
+  // when it followed a pointer tap keeps keyboard-focus opening (a11y)
+  // intact while fixing tap-to-toggle.
   const [open, setOpen] = useState(false);
+  const pointerDownRef = useRef(false);
 
   return (
     <TooltipPrimitive.Root delayDuration={200} open={open} onOpenChange={setOpen}>
       <TooltipPrimitive.Trigger
         asChild
-        onPointerDown={(e) => e.preventDefault()}
+        onPointerDown={() => {
+          pointerDownRef.current = true;
+        }}
+        onFocus={(e) => {
+          if (pointerDownRef.current) e.preventDefault();
+        }}
         onClick={(e) => {
           e.preventDefault();
           setOpen((o) => !o);
+          pointerDownRef.current = false;
         }}
       >
         {children}

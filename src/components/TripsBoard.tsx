@@ -197,6 +197,12 @@ export function TripsBoard({
     }
   }, [trips]);
 
+  const destinationOptions = useMemo(() => {
+    return Array.from(new Set(displayed.map((t) => t.dropoff_location))).sort((a, b) =>
+      a.localeCompare(b),
+    );
+  }, [displayed]);
+
   const filtered = useMemo(() => {
     return displayed.filter((trip) => {
       if (trip._removing) return true;
@@ -206,15 +212,7 @@ export function TripsBoard({
         });
         if (tripDate !== date) return false;
       }
-      if (destination.trim()) {
-        const q = destination.trim().toLowerCase();
-        if (
-          !trip.pickup_location.toLowerCase().includes(q) &&
-          !trip.dropoff_location.toLowerCase().includes(q)
-        ) {
-          return false;
-        }
-      }
+      if (destination && trip.dropoff_location !== destination) return false;
       return true;
     });
   }, [displayed, date, destination]);
@@ -234,13 +232,18 @@ export function TripsBoard({
 
         <label className={labelClass}>
           Destination
-          <input
-            type="text"
+          <select
             value={destination}
             onChange={(e) => setDestination(e.target.value)}
-            placeholder="O'Hare"
             className={fieldClass}
-          />
+          >
+            <option value="">All destinations</option>
+            {destinationOptions.map((loc) => (
+              <option key={loc} value={loc}>
+                {loc}
+              </option>
+            ))}
+          </select>
         </label>
 
         <label className={labelClass}>

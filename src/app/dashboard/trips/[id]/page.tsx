@@ -112,7 +112,7 @@ export default async function TripDetailPage({
               />
             </div>
 
-            <div className="mt-4">
+            <div className="@container mt-4">
               <TripPricing trip={trip} includeViewer={!isMember} />
             </div>
 
@@ -147,6 +147,16 @@ export default async function TripDetailPage({
             {trip.members.length === 0 ? (
               <p className="mt-2 text-body font-body text-foreground/50">
                 No riders yet.
+              </p>
+            ) : trip.members[0].email === null ? (
+              // get_trip_for_view (migration 0020) withholds every rider's
+              // email from a viewer who isn't a member or the poster --
+              // shown to everyone in the group or no one, never a mix, so
+              // checking the first member's email stands in for the whole
+              // list.
+              <p className="mt-2 text-body font-body text-foreground/50">
+                {`${trip.members.length} rider${trip.members.length === 1 ? "" : "s"} so far`}
+                {" · join the trip to see who's riding."}
               </p>
             ) : (
               <ul className="mt-2 flex flex-col gap-1">

@@ -33,11 +33,11 @@ export function JoinTripButton({
   onError?: (error: string) => void;
 }) {
   const [open, setOpen] = useState(defaultOpen);
-  const [bagCount, setBagCount] = useState(0);
+  const [bagCount, setBagCount] = useState("0");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const reason = blockedReason(trip, bagCount);
+  const reason = blockedReason(trip, Number(bagCount) || 0);
 
   const maxBags = maxBagsForRider(trip);
 
@@ -76,7 +76,7 @@ export function JoinTripButton({
           min={0}
           max={Math.max(maxBags, 0)}
           value={bagCount}
-          onChange={(e) => setBagCount(Number(e.target.value))}
+          onChange={(e) => setBagCount(e.target.value.replace(/^0+(?=\d)/, ""))}
           required
           title="Count whatever you can't fit on your lap"
           className="w-12 rounded-md border border-border bg-background px-2 py-1 text-body font-body text-foreground outline-none focus:border-primary"

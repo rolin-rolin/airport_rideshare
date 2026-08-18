@@ -45,7 +45,7 @@ export function TripPricing({
       )}
       <div className="inline-flex items-center gap-1">
         <Tooltip content={detail}>
-          <span className="cursor-help text-price font-display font-semibold text-live decoration-dotted decoration-1 underline-offset-4 hover:underline">
+          <span className="cursor-help text-[clamp(1rem,6cqw,1.375rem)] font-display font-semibold text-live decoration-dotted decoration-1 underline-offset-4 hover:underline">
             ~${Math.round(pricing.perPersonNow)}
             <span className="text-body font-body font-normal text-foreground/60">
               /person{pricing.includesViewer ? " if you join" : ""}

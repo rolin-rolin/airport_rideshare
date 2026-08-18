@@ -59,7 +59,11 @@ export interface TripWithCounts extends Trip {
 export interface SignupMember {
   id: string;
   user_id: string;
-  email: string;
+  // Null for a viewer who isn't an active member or the poster --
+  // get_trip_for_view (migration 0020) strips every rider's email before it
+  // ever reaches a non-member, the same boundary drawn around
+  // contact_method/contact_value.
+  email: string | null;
   bag_count: number;
   joined_at: string;
 }

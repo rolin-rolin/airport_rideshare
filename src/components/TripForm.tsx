@@ -26,6 +26,15 @@ const NOTRE_DAME_LOCATIONS = ["Main Circle", "Library Circle"];
 
 const OTHER_LOCATION = "__other__";
 
+// Digit inputs are kept as strings, not numbers: a numeric state forces
+// itself back to "0" the instant the field is cleared, which then makes the
+// next keystroke land in front of that "0" (e.g. typing 3 produces "03")
+// instead of replacing it. Stripping leading zeros here keeps typed digits
+// clean while still letting the field sit empty mid-edit.
+function stripLeadingZeros(value: string): string {
+  return value.replace(/^0+(?=\d)/, "");
+}
+
 // Every field is required except max luggage per person and the private
 // checkbox. Rather than the browser's native `required` (which blocks
 // submission with its own popover before the user ever sees which fields
@@ -117,8 +126,8 @@ export function TripForm({
 }) {
   const [state, formAction, isPending] = useActionState(createTrip, { error: null });
   const [vehicleTypeId, setVehicleTypeId] = useState(vehicleTypes[0]?.id ?? "");
-  const [seatCapacity, setSeatCapacity] = useState(vehicleTypes[0]?.default_seat_capacity ?? 0);
-  const [bagCapacity, setBagCapacity] = useState(vehicleTypes[0]?.default_bag_capacity ?? 0);
+  const [seatCapacity, setSeatCapacity] = useState(String(vehicleTypes[0]?.default_seat_capacity ?? 0));
+  const [bagCapacity, setBagCapacity] = useState(String(vehicleTypes[0]?.default_bag_capacity ?? 0));
   // datetime-local's raw value has no timezone. The poster is entering a
   // wall-clock time for the trip's departure location, not their own
   // current location, so it must be resolved against the timezone they
@@ -143,8 +152,8 @@ export function TripForm({
     setVehicleTypeId(id);
     const vehicle = vehicleTypes.find((v) => v.id === id);
     if (vehicle) {
-      setSeatCapacity(vehicle.default_seat_capacity);
-      setBagCapacity(vehicle.default_bag_capacity);
+      setSeatCapacity(String(vehicle.default_seat_capacity));
+      setBagCapacity(String(vehicle.default_bag_capacity));
     }
   }
 
@@ -265,7 +274,7 @@ export function TripForm({
             name="seat_capacity"
             min={1}
             value={seatCapacity}
-            onChange={(e) => setSeatCapacity(Number(e.target.value))}
+            onChange={(e) => setSeatCapacity(stripLeadingZeros(e.target.value))}
             className={fieldClass}
           />
         </label>
@@ -277,7 +286,7 @@ export function TripForm({
             name="bag_capacity"
             min={0}
             value={bagCapacity}
-            onChange={(e) => setBagCapacity(Number(e.target.value))}
+            onChange={(e) => setBagCapacity(stripLeadingZeros(e.target.value))}
             className={fieldClass}
           />
         </label>
@@ -291,7 +300,7 @@ export function TripForm({
           min={0}
           placeholder="No limit"
           value={maxBagsPerPerson}
-          onChange={(e) => setMaxBagsPerPerson(e.target.value)}
+          onChange={(e) => setMaxBagsPerPerson(stripLeadingZeros(e.target.value))}
           className={fieldClass}
         />
       </label>
@@ -353,7 +362,7 @@ export function TripForm({
           name="bag_count"
           min={0}
           value={bagCount}
-          onChange={(e) => setBagCount(e.target.value)}
+          onChange={(e) => setBagCount(stripLeadingZeros(e.target.value))}
           className={fieldClassFor("bag_count")}
         />
         <span className="text-label font-body font-normal text-foreground/50">

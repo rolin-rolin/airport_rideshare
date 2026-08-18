@@ -92,10 +92,10 @@ describe("toMembers", () => {
     });
   });
 
-  it("falls back email to 'unknown' when profiles is null", () => {
+  it("falls back email to null when profiles is null (get_trip_for_view withheld it)", () => {
     const [member] = toMembers([makeSignup({ id: "s1", profiles: null })]);
 
-    expect(member.email).toBe("unknown");
+    expect(member.email).toBeNull();
   });
 
   it("sorts members ascending by joined_at", () => {

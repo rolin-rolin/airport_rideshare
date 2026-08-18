@@ -85,8 +85,12 @@ export function TripCard({
         {DIRECTION_LABEL[direction]}
       </p>
 
-      <div className="relative z-10 mt-1 flex items-end justify-between gap-3">
-        <span className="text-price sm:text-display-lg font-display font-bold text-foreground">
+      {/* @container: date and price scale down together (via cqw below) as
+          this row's own width shrinks, instead of the price staying fixed
+          size while only the date responds to the sm: breakpoint -- same
+          technique as RouteDisplay's route text. */}
+      <div className="@container relative z-10 mt-1 flex items-end justify-between gap-3">
+        <span className="min-w-0 shrink text-[clamp(1.1rem,7cqw,1.375rem)] sm:text-display-lg font-display font-bold text-foreground">
           {formatTripDate(trip.departure_time, trip.timezone)} @{" "}
           {formatTripTime(trip.departure_time, trip.timezone)}
         </span>

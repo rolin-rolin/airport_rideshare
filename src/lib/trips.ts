@@ -107,7 +107,10 @@ export function toMembers(signups: SignupRow[]): SignupMember[] {
     .map((s) => ({
       id: s.id,
       user_id: s.user_id,
-      email: s.profiles?.email ?? "unknown",
+      // profiles.email is not-null and every signup's user_id has a
+      // matching profile row, so a null here only ever means
+      // get_trip_for_view withheld it -- never a data gap.
+      email: s.profiles?.email ?? null,
       bag_count: s.bag_count,
       joined_at: s.joined_at,
     }))

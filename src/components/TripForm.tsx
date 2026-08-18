@@ -206,7 +206,7 @@ export function TripForm({
             onChange={(e) => setDepartureTimeLocal(e.target.value)}
           />
         </label>
-        <label className={labelClass}>
+        <label className={`min-w-0 flex-1 ${labelClass}`}>
           Timezone
           <select
             name="timezone"

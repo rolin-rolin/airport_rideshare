@@ -2,10 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { TripCard } from "@/components/TripCard";
-import { blockedReason } from "@/lib/trip-capacity";
+import { blockedReason, LUGGAGE_OPTIONS, LUGGAGE_STORAGE_KEY } from "@/lib/trip-capacity";
 import type { Direction, TripWithCounts, TripWithMembers } from "@/lib/types";
-
-const LUGGAGE_OPTIONS = [0, 1, 2, 3, 4, 5];
 
 const fieldClass =
   "rounded-md border border-border bg-background px-3 py-2 text-body font-body text-foreground outline-none focus:border-primary";
@@ -39,7 +37,18 @@ export function TripsBoard({
 }) {
   const [date, setDate] = useState("");
   const [destination, setDestination] = useState("");
-  const [luggage, setLuggage] = useState(0);
+  // Initialized lazily from localStorage (guarded for SSR, where window is
+  // undefined) so a rider's suitcase count survives clicking into a trip's
+  // detail page and back, instead of resetting to 0 on every remount.
+  const [luggage, setLuggage] = useState(() => {
+    if (typeof window === "undefined") return 0;
+    const stored = Number(window.localStorage.getItem(LUGGAGE_STORAGE_KEY));
+    return LUGGAGE_OPTIONS.includes(stored) ? stored : 0;
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem(LUGGAGE_STORAGE_KEY, String(luggage));
+  }, [luggage]);
 
   const [displayed, setDisplayed] = useState<DisplayedTrip[]>(trips);
   const [flashIds, setFlashIds] = useState<Set<string>>(new Set());

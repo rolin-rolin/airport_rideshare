@@ -2,7 +2,7 @@
 
 import { useState, useTransition, type FormEvent } from "react";
 import { joinTrip } from "@/app/dashboard/actions";
-import { blockedReason, maxBagsForRider } from "@/lib/trip-capacity";
+import { blockedReason, LUGGAGE_OPTIONS, maxBagsForRider } from "@/lib/trip-capacity";
 import type { TripWithCounts } from "@/lib/types";
 
 // The one confirmation panel, shared by the board card and the trip detail
@@ -76,17 +76,19 @@ export function JoinTripButton({
       <input type="hidden" name="trip_id" value={trip.id} />
       <label className="flex items-center gap-1.5 text-body font-body text-foreground/70">
         Suitcases
-        <input
-          type="number"
+        <select
           name="bag_count"
-          min={0}
-          max={Math.max(maxBags, 0)}
           value={bagCount}
-          onChange={(e) => setBagCount(e.target.value.replace(/^0+(?=\d)/, ""))}
-          required
+          onChange={(e) => setBagCount(e.target.value)}
           title="Count whatever you can't fit on your lap"
-          className="w-12 rounded-md border border-border bg-background px-2 py-1 text-body font-body text-foreground outline-none focus:border-primary"
-        />
+          className="rounded-md border border-border bg-background px-2 py-1 text-body font-body text-foreground outline-none focus:border-primary"
+        >
+          {LUGGAGE_OPTIONS.filter((n) => n <= Math.max(maxBags, 0)).map((n) => (
+            <option key={n} value={n}>
+              {n} suitcase{n === 1 ? "" : "s"}
+            </option>
+          ))}
+        </select>
       </label>
       <button
         type="submit"

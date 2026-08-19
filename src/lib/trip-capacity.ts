@@ -1,5 +1,14 @@
 import type { TripWithCounts } from "@/lib/types";
 
+// Shared by the board's "Your suitcases" filter and the join form's
+// suitcase dropdown, so both offer the same set of choices.
+export const LUGGAGE_OPTIONS = [0, 1, 2, 3, 4, 5];
+
+// localStorage key the board's suitcase filter is persisted under, so a
+// rider's count survives clicking into a trip and back rather than
+// resetting to 0 on every remount.
+export const LUGGAGE_STORAGE_KEY = "airport_rideshare:luggage";
+
 // Client-side mirrors of the join checks in check_signup_capacity
 // (migration 0011). Kept in their own module rather than in trips.ts
 // because both the board and the join panel are client components, and

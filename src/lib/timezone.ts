@@ -27,6 +27,51 @@ export function zonedDateTimeLocalToUtcIso(value: string, timeZone: TripTimezone
   return new Date(utcGuess - offsetMinutes * 60_000).toISOString();
 }
 
+// Formats a UTC instant (as produced by zonedDateTimeLocalToUtcIso) back into
+// a human-readable wall-clock string *in `timeZone`* -- e.g. "Saturday,
+// August 23, 12:30 AM". Used to show posters an explicit confirmation of
+// which calendar day their entry resolves to, since a time like 12:30 AM is
+// easy to mentally attribute to the previous night's date instead of the one
+// it's actually stored under.
+export function formatZonedDateTime(iso: string, timeZone: TripTimezone): string {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(new Date(iso));
+}
+
+// For a departure that lands between 12:00 AM and 2:59 AM *in `timeZone`*,
+// returns the previous calendar date (e.g. "August 22") -- the date posters
+// are likely to have in mind when they think of this as "the night of" a
+// late departure, even though it's technically stored under the next day.
+// Returns null outside that window, where there's no such ambiguity.
+export function nightOfPreviousDayLabel(iso: string, timeZone: TripTimezone): string | null {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+  })
+    .formatToParts(new Date(iso))
+    .reduce<Record<string, string>>((acc, p) => {
+      if (p.type !== "literal") acc[p.type] = p.value;
+      return acc;
+    }, {});
+  if (Number(parts.hour) >= 3) return null;
+  const dayUtc = Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day));
+  const previousDay = new Date(dayUtc - 24 * 60 * 60 * 1000);
+  return new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", timeZone: "UTC" }).format(
+    previousDay,
+  );
+}
+
 // How far `timeZone`'s wall clock is ahead of UTC at `date`, in minutes.
 function offsetMinutesAt(date: Date, timeZone: string): number {
   const parts = new Intl.DateTimeFormat("en-US", {

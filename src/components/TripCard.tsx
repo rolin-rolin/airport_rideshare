@@ -55,7 +55,7 @@ export function TripCard({
           a form inside a link would hijack clicks on the bag input). The
           action area below sits above it via z-10. */}
       <Link
-        href={`/dashboard/trips/${trip.id}`}
+        href={`/dashboard/trips/${trip.id}?bags=${luggage}`}
         className="absolute inset-0 rounded-xl"
         aria-label={`View trip from ${trip.pickup_location} to ${trip.dropoff_location}`}
       />

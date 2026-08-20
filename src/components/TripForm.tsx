@@ -3,7 +3,13 @@
 import { useActionState, useState } from "react";
 import { createTrip } from "@/app/dashboard/actions";
 import type { ContactMethod, Direction, VehicleType } from "@/lib/types";
-import { TIMEZONE_OPTIONS, zonedDateTimeLocalToUtcIso, type TripTimezone } from "@/lib/timezone";
+import {
+  TIMEZONE_OPTIONS,
+  formatZonedDateTime,
+  nightOfPreviousDayLabel,
+  zonedDateTimeLocalToUtcIso,
+  type TripTimezone,
+} from "@/lib/timezone";
 import { VehicleTypeSelectInfoButton } from "@/components/VehicleTypeSelectInfoButton";
 
 const CONTACT_METHOD_OPTIONS: { value: ContactMethod; label: string; inputType: string; placeholder: string }[] = [
@@ -138,6 +144,7 @@ export function TripForm({
   const departureTimeIso = departureTimeLocal
     ? zonedDateTimeLocalToUtcIso(departureTimeLocal, timezone)
     : "";
+  const nightOfLabel = departureTimeIso ? nightOfPreviousDayLabel(departureTimeIso, timezone) : null;
   const [pickupLocation, setPickupLocation] = useState("");
   const [dropoffLocation, setDropoffLocation] = useState("");
   const [estimatedTotalCost, setEstimatedTotalCost] = useState("");
@@ -196,7 +203,7 @@ export function TripForm({
       <input type="hidden" name="direction" value={direction} />
 
       <input type="hidden" name="departure_time" value={departureTimeIso} />
-      <div className="flex gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row">
         <label className={`min-w-0 flex-1 ${labelClass}`}>
           Departure time
           <input
@@ -222,6 +229,14 @@ export function TripForm({
           </select>
         </label>
       </div>
+      {departureTimeIso && (
+        <p className="-mt-2 break-words text-label font-body font-semibold text-foreground">
+          That&apos;s {formatZonedDateTime(departureTimeIso, timezone)}
+          {nightOfLabel && (
+            <span className="font-normal text-foreground/50"> (night of {nightOfLabel})</span>
+          )}
+        </p>
+      )}
       <p className="-mt-2 text-label font-body text-foreground/50">
         Enter the time where this trip departs from. This trip posting expires one hour after
         departure — coordinate with your group before then.

@@ -8,6 +8,7 @@ import { TripPricing } from "@/components/TripPricing";
 import { VehicleTypeInfoButton } from "@/components/VehicleTypeInfoButton";
 import { Tooltip } from "@/components/Tooltip";
 import { formatTripDate, formatTripTime } from "@/components/FormattedTripTime";
+import { nightOfPreviousDayLabel } from "@/lib/timezone";
 
 const DIRECTION_LABEL: Record<Direction, string> = {
   to_airport: "Leaves campus",
@@ -38,6 +39,7 @@ export function TripCard({
   entering?: boolean;
   removing?: boolean;
 }) {
+  const nightOfLabel = nightOfPreviousDayLabel(trip.departure_time, trip.timezone);
   return (
     <div
       className={`relative rounded-xl border border-border bg-background p-5 transition-colors hover:border-primary/40 ${
@@ -73,8 +75,13 @@ export function TripCard({
           {formatTripDate(trip.departure_time, trip.timezone)} @{" "}
           {formatTripTime(trip.departure_time, trip.timezone)}
         </span>
-        <TripPricing trip={trip} includeViewer={!isMine} className="shrink-0 text-right" />
+        <TripPricing trip={trip} includeViewer={!isMine} className="shrink-0 self-center text-right" />
       </div>
+      {nightOfLabel && (
+        <p className="relative z-10 text-label font-body font-bold text-foreground/70">
+          (night of {nightOfLabel})
+        </p>
+      )}
 
       <div className="mt-4">
         <RouteDisplay pickup={trip.pickup_location} dropoff={trip.dropoff_location} />

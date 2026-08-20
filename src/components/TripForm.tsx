@@ -212,6 +212,11 @@ export function TripForm({
             value={departureTimeLocal}
             onChange={(e) => setDepartureTimeLocal(e.target.value)}
           />
+          {nightOfLabel && (
+            <span className="text-label font-body font-bold text-foreground/70">
+              (night of {nightOfLabel})
+            </span>
+          )}
         </label>
         <label className={`min-w-0 flex-1 ${labelClass}`}>
           Timezone
@@ -232,9 +237,6 @@ export function TripForm({
       {departureTimeIso && (
         <p className="-mt-2 break-words text-label font-body font-semibold text-foreground">
           That&apos;s {formatZonedDateTime(departureTimeIso, timezone)}
-          {nightOfLabel && (
-            <span className="font-normal text-foreground/50"> (night of {nightOfLabel})</span>
-          )}
         </p>
       )}
       <p className="-mt-2 text-label font-body text-foreground/50">

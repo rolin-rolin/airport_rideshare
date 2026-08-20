@@ -12,6 +12,7 @@ import {
   FormattedTripDate,
   FormattedTripTime,
 } from "@/components/FormattedTripTime";
+import { nightOfPreviousDayLabel } from "@/lib/timezone";
 import {
   TripViewRealtimeFlash,
   FlashCard,
@@ -63,6 +64,7 @@ export default async function TripDetailPage({
 
   if (!trip) notFound();
 
+  const nightOfLabel = nightOfPreviousDayLabel(trip.departure_time, trip.timezone);
   const isMember = trip.members.some((m) => m.user_id === user?.id);
   const isPoster = trip.created_by === user?.id;
   const inAnotherTrip = myActiveTrip != null && myActiveTrip.id !== trip.id;
@@ -102,6 +104,11 @@ export default async function TripDetailPage({
                     timeZone={trip.timezone}
                   />
                 </p>
+                {nightOfLabel && (
+                  <p className="mt-0.5 text-label font-body font-bold text-foreground/70">
+                    (night of {nightOfLabel})
+                  </p>
+                )}
               </div>
               {trip.visibility === "private" && (
                 <span className="shrink-0 rounded-full bg-accent/15 px-3 py-1 text-label font-display font-semibold text-accent">

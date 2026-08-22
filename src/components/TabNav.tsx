@@ -5,13 +5,13 @@ import { useSearchParams } from "next/navigation";
 import type { Direction } from "@/lib/types";
 
 const TABS: { direction: Direction; label: string }[] = [
-  { direction: "to_airport", label: "To Airport" },
   { direction: "from_airport", label: "From Airport" },
+  { direction: "to_airport", label: "To Airport" },
 ];
 
 export function TabNav() {
   const searchParams = useSearchParams();
-  const active = searchParams.get("dir") === "from_airport" ? "from_airport" : "to_airport";
+  const active = searchParams.get("dir") === "to_airport" ? "to_airport" : "from_airport";
 
   return (
     <div className="flex gap-1 rounded-full border border-border bg-background p-1">

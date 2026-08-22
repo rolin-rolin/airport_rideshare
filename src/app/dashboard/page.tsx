@@ -11,7 +11,7 @@ export default async function DashboardPage({
   searchParams: Promise<{ dir?: string }>;
 }) {
   const { dir } = await searchParams;
-  const direction: Direction = dir === "from_airport" ? "from_airport" : "to_airport";
+  const direction: Direction = dir === "to_airport" ? "to_airport" : "from_airport";
 
   const [trips, myActiveTrip] = await Promise.all([
     getBoardTrips(direction),

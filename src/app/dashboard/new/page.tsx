@@ -9,7 +9,7 @@ export default async function NewTripPage({
   searchParams: Promise<{ dir?: string }>;
 }) {
   const { dir } = await searchParams;
-  const direction: Direction = dir === "from_airport" ? "from_airport" : "to_airport";
+  const direction: Direction = dir === "to_airport" ? "to_airport" : "from_airport";
 
   const activeTrip = await getMyActiveTrip();
 

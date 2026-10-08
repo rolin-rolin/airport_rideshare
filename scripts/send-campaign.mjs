@@ -22,7 +22,7 @@
 // and http://localhost:3000 unsubscribe links instead.
 //
 // Needs in the env file: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
-// RESEND_API_KEY, CAMPAIGN_POSTAL_ADDRESS.
+// RESEND_API_KEY.
 import { createClient } from "@supabase/supabase-js";
 import { readFileSync } from "fs";
 
@@ -47,7 +47,7 @@ const local = args.includes("--local");
 // Deliberately one or the other, never both: unlike the dev scripts, this
 // must not silently fall through to a different project's keys.
 loadEnv(new URL("file://" + process.cwd() + (local ? "/.env.development.local" : "/.env.local")));
-if (local) loadEnv(new URL("file://" + process.cwd() + "/.env.local")); // RESEND_API_KEY, CAMPAIGN_POSTAL_ADDRESS only live here
+if (local) loadEnv(new URL("file://" + process.cwd() + "/.env.local")); // RESEND_API_KEY only lives here
 
 const SITE_URL = local ? "http://localhost:3000" : "https://downtosplit.app";
 
@@ -266,8 +266,8 @@ async function send() {
     process.exit(1);
   }
 
-  requireEnv("RESEND_API_KEY", "CAMPAIGN_POSTAL_ADDRESS");
-  const values = { POSTAL_ADDRESS: process.env.CAMPAIGN_POSTAL_ADDRESS };
+  requireEnv("RESEND_API_KEY");
+  const values = {};
   const templates = {
     html: readFileSync("emails/announcement.html", "utf8"),
     text: readFileSync("emails/announcement.txt", "utf8"),

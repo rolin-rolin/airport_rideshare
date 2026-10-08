@@ -2,22 +2,30 @@ Heading to the airport for break? Split the ride with other ND students.
 
 Hi {{FIRST_NAME}},
 
-We're Down to Split, an ND student-built project. We got sick of inconvenient bus times to O'Hare and Midway, and went broke on upcharged Ubers to South Bend Airport, so we built a fix.
+We're Down to Split, an ND student-built project that helps you find other students to split a ride with to or from the airport. You can join an existing trip on our trip board, or you can post your own.
 
-Post when you're taking a rideshare to the airport, and anyone going at the same time can join your trip. You split the cost, and getting to the airport feels a little better, timewise and moneywise.
+Example trip:
 
-Try creating a trip! It takes less than a minute, and you can check back anytime to see if anyone wants to join you and split the cost.
+  Fri, Oct 16 @ 2:30 PM
+  Main Circle -> O'Hare T1
+  Trip total $140, about $35/person
+  3 of 4 seats filled
+
+It's simple:
+1. Post when you're taking a rideshare to the airport (or make a private trip and share the invite link!)
+2. Wait for people to join. You'll get each other's contact info to coordinate.
+3. Split the ride and the fare. A $140 trip comes to about $35 each with four people.
+
+Try creating a trip! It's super easy, and you can check back anytime to see if anyone wants to join you.
 
 Create a trip: https://downtosplit.app
-(Free. Sign in with your @nd.edu Google account.)
+(Free. ND students only. Sign in with your @nd.edu Google account.)
 
 The more eyes on this, the more rides get split, so spread the word!
 
-The ND students behind Down to Split
+The Down to Split team
 
 --
-Why you're getting this: you're a Notre Dame student, and Down to Split is built by ND students for ND students. It's a student project and is not affiliated with the University of Notre Dame.
+Why you're getting this: splitting a ride only works when enough students going the same way know about it, so we're letting Notre Dame students know before break. If it's not for you, you can opt out here: {{UNSUBSCRIBE_URL}}
 
-Unsubscribe from these emails: {{UNSUBSCRIBE_URL}}
-
-{{POSTAL_ADDRESS}}
+Student project - not affiliated with the University of Notre Dame

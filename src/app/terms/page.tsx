@@ -83,12 +83,12 @@ export default function TermsPage() {
 
       <Section title="Contact">
         <p>
-          Questions? Reach out at{" "}
+          Questions? Reach out to{" "}
           <a
-            href="mailto:rolin71110@gmail.com"
+            href="mailto:ride@downtosplit.app"
             className="text-primary underline underline-offset-2"
           >
-            rolin71110@gmail.com
+            ride@downtosplit.app
           </a>
           .
         </p>

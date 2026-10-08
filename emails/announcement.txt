@@ -1,0 +1,23 @@
+Heading to the airport for break? Split the ride with other ND students.
+
+Hi {{FIRST_NAME}},
+
+We're Down to Split, an ND student-built project. We got sick of inconvenient bus times to O'Hare and Midway, and went broke on upcharged Ubers to South Bend Airport, so we built a fix.
+
+Post when you're taking a rideshare to the airport, and anyone going at the same time can join your trip. You split the cost, and getting to the airport feels a little better, timewise and moneywise.
+
+Try creating a trip! It takes less than a minute, and you can check back anytime to see if anyone wants to join you and split the cost.
+
+Create a trip: https://downtosplit.app
+(Free. Sign in with your @nd.edu Google account.)
+
+The more eyes on this, the more rides get split, so spread the word!
+
+The ND students behind Down to Split
+
+--
+Why you're getting this: you're a Notre Dame student, and Down to Split is built by ND students for ND students. It's a student project and is not affiliated with the University of Notre Dame.
+
+Unsubscribe from these emails: {{UNSUBSCRIBE_URL}}
+
+{{POSTAL_ADDRESS}}

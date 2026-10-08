@@ -43,3 +43,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env.local
+
+# recipient lists for scripts/send-campaign.mjs -- never commit addresses
+*.csv

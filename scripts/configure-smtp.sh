@@ -14,7 +14,7 @@ response=$(curl -sS -w '\n%{http_code}' -X PATCH \
     \"smtp_port\": \"465\",
     \"smtp_user\": \"resend\",
     \"smtp_pass\": \"$RESEND_API_KEY\",
-    \"smtp_admin_email\": \"noreply@auth.downtosplit.app\",
+    \"smtp_admin_email\": \"ride@downtosplit.app\",
     \"smtp_sender_name\": \"Down to Split\"
   }")
 

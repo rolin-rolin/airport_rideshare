@@ -28,7 +28,7 @@ import { readFileSync } from "fs";
 
 const FROM = "Down to Split <ride@downtosplit.app>";
 const REPLY_TO = "ride@downtosplit.app";
-const SUBJECT = "Split your ride to the airport with other ND students";
+const SUBJECT = "Flying out for fall break? Split your ride to the airport";
 // Stop the batch after this many failed sends in a row -- a run of failures
 // means something is wrong (key, quota, suspension), not one bad address.
 const MAX_CONSECUTIVE_FAILURES = 3;

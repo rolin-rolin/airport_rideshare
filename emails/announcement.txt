@@ -1,8 +1,8 @@
-Heading to the airport for break? Split the ride with other ND students.
+Heading to the airport for break? Split your rideshare with others at ND.
 
 Hi {{FIRST_NAME}},
 
-We're Down to Split, an ND student-built project that helps you find other students to split a ride with to or from the airport. You can join an existing trip on our trip board, or you can post your own.
+We're Down to Split, an ND student-built project that helps you find others at ND to split a ride with to or from the airport. You can join an existing trip on our trip board, or you can post your own.
 
 Example trip:
 
@@ -14,18 +14,18 @@ Example trip:
 It's simple:
 1. Post when you're taking a rideshare to the airport (or make a private trip and share the invite link!)
 2. Wait for people to join. You'll get each other's contact info to coordinate.
-3. Split the ride and the fare. A $140 trip comes to about $35 each with four people.
+3. Split your rideshare and the fare. A $140 trip comes to about $35 each with four people.
 
 Try creating a trip! It's super easy, and you can check back anytime to see if anyone wants to join you.
 
 Create a trip: https://downtosplit.app
-(Free. ND students only. Sign in with your @nd.edu Google account.)
+(Free. ND emails only. Sign in with your @nd.edu Google account.)
 
 The more eyes on this, the more rides get split, so spread the word!
 
 The Down to Split team
 
 --
-Why you're getting this: splitting a ride only works when enough students going the same way know about it, so we're letting Notre Dame students know before break. If it's not for you, you can opt out here: {{UNSUBSCRIBE_URL}}
+Why you're getting this: splitting a ride only works when enough people going the same way know about it, so we're letting the Notre Dame community know before break. If it's not for you, you can opt out here: {{UNSUBSCRIBE_URL}}
 
 Student project - not affiliated with the University of Notre Dame

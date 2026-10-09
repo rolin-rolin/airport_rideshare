@@ -10,6 +10,9 @@
 //                                                      header row naming a name column
 //   node scripts/send-campaign.mjs status              counts: pending / sent / unsubscribed
 //   node scripts/send-campaign.mjs send --limit 100    send the next 100 pending addresses
+//   node scripts/send-campaign.mjs results             what Resend says happened to each sent
+//                                                      email: delivered / bounced / complained
+//                                                      (--last <n> checks only the newest n)
 //
 // send options:
 //   --dry-run        print who would be emailed, send nothing
@@ -345,11 +348,76 @@ async function send() {
   if (!dryRun) console.log(`Done: ${sent} sent, ${failed} failed.`);
 }
 
-const command = args.find((a) => ["import", "status", "send"].includes(a));
+// Resend's send response only says the email was accepted; what happened
+// next (delivered, bounced, marked as spam) has to be read back per email.
+// Needs a full-access RESEND_API_KEY -- a send-only key gets a 401 here.
+async function results() {
+  requireEnv("RESEND_API_KEY");
+  const last = flag("--last") ? Number(flag("--last")) : null;
+  if (last !== null && (!Number.isInteger(last) || last <= 0)) {
+    console.error("--last needs a positive whole number");
+    process.exit(1);
+  }
+
+  // Paged: a single select stops at the API's 1000-row cap.
+  const rows = [];
+  while (last === null || rows.length < last) {
+    const size = Math.min(1000, last === null ? 1000 : last - rows.length);
+    const { data, error } = await supabase
+      .from(TABLE)
+      .select("email, resend_id, sent_at")
+      .not("resend_id", "is", null)
+      .order("sent_at", { ascending: false })
+      .range(rows.length, rows.length + size - 1);
+    if (error) throw error;
+    rows.push(...data);
+    if (data.length < size) break;
+  }
+  if (!rows.length) {
+    console.log("Nothing sent yet.");
+    return;
+  }
+
+  const byEvent = new Map();
+  for (const [i, row] of rows.entries()) {
+    let event;
+    for (let attempt = 0; ; attempt++) {
+      const res = await fetch(`https://api.resend.com/emails/${row.resend_id}`, {
+        headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+      });
+      // Rate limited (a send may be running alongside): back off and retry.
+      if (res.status === 429 && attempt < 5) {
+        await new Promise((r) => setTimeout(r, 2000));
+        continue;
+      }
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(`Resend ${res.status}: ${body.message ?? JSON.stringify(body)}`);
+      event = body.last_event ?? "unknown";
+      break;
+    }
+    if (!byEvent.has(event)) byEvent.set(event, []);
+    byEvent.get(event).push(row.email);
+    if (rows.length > 50 && (i + 1) % 50 === 0) console.error(`checked ${i + 1}/${rows.length}...`);
+    await new Promise((r) => setTimeout(r, 250));
+  }
+
+  const pct = (n) => `${((n / rows.length) * 100).toFixed(2)}%`;
+  console.log(`${rows.length} sent email(s) checked:`);
+  for (const [event, emails] of [...byEvent].sort((a, b) => b[1].length - a[1].length)) {
+    console.log(`  ${event.padEnd(18)} ${String(emails.length).padStart(5)}  ${pct(emails.length)}`);
+  }
+  // Resend's limits: bounces under 4%, spam complaints under 0.08%.
+  for (const event of ["bounced", "complained", "failed", "suppressed"]) {
+    for (const email of byEvent.get(event) ?? []) console.log(`${event}: ${email}`);
+  }
+}
+
+const command = args.find((a) => ["import", "status", "send", "results"].includes(a));
 if (command === "import") await importList(args[args.indexOf("import") + 1]);
 else if (command === "status") await status();
 else if (command === "send") await send();
+else if (command === "results") await results();
 else {
-  console.error("usage: node scripts/send-campaign.mjs [--local] <import <csv> | status | send --limit <n>>");
+  console.error("usage: node scripts/send-campaign.mjs [--local] <import <csv> | status | send --limit <n> | results>");
   process.exit(1);
 }

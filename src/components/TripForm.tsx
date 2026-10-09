@@ -32,6 +32,11 @@ const NOTRE_DAME_LOCATIONS = ["Main Circle", "Library Circle"];
 
 const OTHER_LOCATION = "__other__";
 
+const DIRECTION_OPTIONS: { value: Direction; label: string }[] = [
+  { value: "to_airport", label: "I'm going to the airport" },
+  { value: "from_airport", label: "I'm coming from the airport" },
+];
+
 // Digit inputs are kept as strings, not numbers: a numeric state forces
 // itself back to "0" the instant the field is cleared, which then makes the
 // next keystroke land in front of that "0" (e.g. typing 3 produces "03")
@@ -44,10 +49,10 @@ function stripLeadingZeros(value: string): string {
 // Every field is required except max luggage per person and the private
 // checkbox. Rather than the browser's native `required` (which blocks
 // submission with its own popover before the user ever sees which fields
-// are at fault), validity is tracked here field-by-field so the submit
-// button itself can stay disabled until everything's filled in — the user
-// gets turned away before they even try, instead of after.
+// are at fault), validity is tracked here field-by-field so a failed
+// submit can highlight every missing field at once.
 type FieldName =
+  | "direction"
   | "departure_time"
   | "pickup_location"
   | "dropoff_location"
@@ -123,14 +128,12 @@ function LocationField({
   );
 }
 
-export function TripForm({
-  vehicleTypes,
-  direction,
-}: {
-  vehicleTypes: VehicleType[];
-  direction: Direction;
-}) {
+export function TripForm({ vehicleTypes }: { vehicleTypes: VehicleType[] }) {
   const [state, formAction, isPending] = useActionState(createTrip, { error: null });
+  // Deliberately starts unset rather than inheriting whichever board tab the
+  // poster came from: the direction decides which board the trip lands on,
+  // so it has to be an explicit choice.
+  const [direction, setDirection] = useState<Direction | "">("");
   const [vehicleTypeId, setVehicleTypeId] = useState(vehicleTypes[0]?.id ?? "");
   const [seatCapacity, setSeatCapacity] = useState(String(vehicleTypes[0]?.default_seat_capacity ?? 0));
   const [bagCapacity, setBagCapacity] = useState(String(vehicleTypes[0]?.default_bag_capacity ?? 0));
@@ -153,7 +156,17 @@ export function TripForm({
   const [bagCount, setBagCount] = useState("0");
   const [maxBagsPerPerson, setMaxBagsPerPerson] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
-  const [invalidFields, setInvalidFields] = useState<Set<FieldName>>(new Set());
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+
+  // Pickup and dropoff draw from opposite location lists depending on
+  // direction, so whatever was picked under the old direction no longer
+  // applies.
+  function handleDirectionChange(next: Direction) {
+    if (next === direction) return;
+    setDirection(next);
+    setPickupLocation("");
+    setDropoffLocation("");
+  }
 
   function handleVehicleTypeChange(id: string) {
     setVehicleTypeId(id);
@@ -170,6 +183,7 @@ export function TripForm({
 
   function computeInvalidFields(): Set<FieldName> {
     const invalid = new Set<FieldName>();
+    if (!direction) invalid.add("direction");
     if (!departureTimeIso) invalid.add("departure_time");
     if (!pickupLocation.trim()) invalid.add("pickup_location");
     if (!dropoffLocation.trim()) invalid.add("dropoff_location");
@@ -181,16 +195,14 @@ export function TripForm({
     return invalid;
   }
 
-  // Recomputed every render off current field state (cheap: a handful of
-  // string checks) so the submit button's disabled state always reflects
-  // what's actually filled in, not just what was true at the last submit
-  // attempt.
-  const missingFields = computeInvalidFields();
+  // Errors stay hidden until the first submit attempt, then are recomputed
+  // every render off current field state (cheap: a handful of string
+  // checks) so each highlight clears as soon as its field is filled in.
+  const invalidFields = submitAttempted ? computeInvalidFields() : new Set<FieldName>();
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    const invalid = computeInvalidFields();
-    setInvalidFields(invalid);
-    if (invalid.size > 0) {
+    setSubmitAttempted(true);
+    if (computeInvalidFields().size > 0) {
       e.preventDefault();
     }
   }
@@ -200,7 +212,31 @@ export function TripForm({
   // null -- there's no success state to react to here.
   return (
     <form action={formAction} onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
-      <input type="hidden" name="direction" value={direction} />
+      <div className="flex flex-col gap-2">
+        <span className={labelClass}>Which way are you headed?</span>
+        <input type="hidden" name="direction" value={direction} />
+        <div className="flex flex-wrap gap-4">
+          {DIRECTION_OPTIONS.map((opt) => (
+            <label
+              key={opt.value}
+              className="flex items-center gap-1.5 text-body font-body text-foreground"
+            >
+              <input
+                type="radio"
+                name="direction_choice"
+                value={opt.value}
+                checked={direction === opt.value}
+                onChange={() => handleDirectionChange(opt.value)}
+                className="accent-primary"
+              />
+              {opt.label}
+            </label>
+          ))}
+        </div>
+        {invalidFields.has("direction") && (
+          <p className="text-label font-body text-red-600">Please choose one.</p>
+        )}
+      </div>
 
       <input type="hidden" name="departure_time" value={departureTimeIso} />
       <div className="flex flex-col gap-4 sm:flex-row">
@@ -244,25 +280,37 @@ export function TripForm({
         departure — coordinate with your group before then.
       </p>
 
-      <LocationField
-        label="Pickup location"
-        name="pickup_location"
-        placeholder="Dillon Hall"
-        options={direction === "to_airport" ? NOTRE_DAME_LOCATIONS : AIRPORT_LOCATIONS}
-        value={pickupLocation}
-        onChange={setPickupLocation}
-        className={fieldClassFor("pickup_location")}
-      />
+      {/* Keyed by direction so each field's own "Other…" toggle resets along
+          with its value when the direction flips. */}
+      {direction ? (
+        <>
+          <LocationField
+            key={`pickup-${direction}`}
+            label="Pickup location"
+            name="pickup_location"
+            placeholder={direction === "to_airport" ? "Dillon Hall" : "O'Hare T1"}
+            options={direction === "to_airport" ? NOTRE_DAME_LOCATIONS : AIRPORT_LOCATIONS}
+            value={pickupLocation}
+            onChange={setPickupLocation}
+            className={fieldClassFor("pickup_location")}
+          />
 
-      <LocationField
-        label="Dropoff location"
-        name="dropoff_location"
-        placeholder="O'Hare T1"
-        options={direction === "to_airport" ? AIRPORT_LOCATIONS : NOTRE_DAME_LOCATIONS}
-        value={dropoffLocation}
-        onChange={setDropoffLocation}
-        className={fieldClassFor("dropoff_location")}
-      />
+          <LocationField
+            key={`dropoff-${direction}`}
+            label="Dropoff location"
+            name="dropoff_location"
+            placeholder={direction === "to_airport" ? "O'Hare T1" : "Dillon Hall"}
+            options={direction === "to_airport" ? AIRPORT_LOCATIONS : NOTRE_DAME_LOCATIONS}
+            value={dropoffLocation}
+            onChange={setDropoffLocation}
+            className={fieldClassFor("dropoff_location")}
+          />
+        </>
+      ) : (
+        <p className="text-label font-body text-foreground/50">
+          Choose which way you&apos;re headed above to pick your pickup and dropoff locations.
+        </p>
+      )}
 
       <label className={labelClass}>
         <span className="flex items-center gap-1.5">
@@ -415,7 +463,7 @@ export function TripForm({
 
       <button
         type="submit"
-        disabled={isPending || missingFields.size > 0}
+        disabled={isPending}
         className="mt-2 rounded-full bg-primary px-5 py-2.5 text-body font-display font-semibold text-background transition-colors hover:bg-primary/90 disabled:opacity-50"
       >
         {isPending ? "Posting..." : "Post trip"}

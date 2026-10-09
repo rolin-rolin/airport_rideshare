@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/server";
 import type { ContactMethod, Direction } from "@/lib/types";
 import { TIMEZONE_OPTIONS, type TripTimezone } from "@/lib/timezone";
 
+const DIRECTIONS: Direction[] = ["to_airport", "from_airport"];
 const CONTACT_METHODS: ContactMethod[] = ["phone", "link", "email"];
 const TIMEZONES: TripTimezone[] = TIMEZONE_OPTIONS.map((o) => o.value);
 import { friendlyError } from "@/lib/friendly-error";
@@ -32,7 +33,7 @@ export async function createTrip(
 ): Promise<ActionState> {
   const { supabase } = await requireUser();
 
-  const direction = String(formData.get("direction")) as Direction;
+  const direction = String(formData.get("direction") ?? "");
   const departureTime = String(formData.get("departure_time"));
   const timezone = String(formData.get("timezone") ?? "");
   const pickupLocation = String(formData.get("pickup_location") ?? "").trim();
@@ -48,6 +49,9 @@ export async function createTrip(
   // Unchecked checkboxes aren't submitted at all, so presence is the value.
   const visibility = formData.get("visibility") ? "private" : "public";
 
+  if (!DIRECTIONS.includes(direction as Direction)) {
+    return { error: "Please choose whether you're going to or coming from the airport." };
+  }
   if (
     !pickupLocation ||
     !dropoffLocation ||

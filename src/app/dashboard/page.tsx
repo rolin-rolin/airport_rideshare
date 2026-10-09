@@ -34,7 +34,7 @@ export default async function DashboardPage({
             </span>
           ) : (
             <Link
-              href={`/dashboard/new?dir=${direction}`}
+              href="/dashboard/new"
               className="shrink-0 rounded-full bg-primary px-4 py-2 text-label font-display font-semibold text-background transition-colors hover:bg-primary/90"
             >
               Post a trip

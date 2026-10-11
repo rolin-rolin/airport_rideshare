@@ -1,9 +1,9 @@
 ---
 name: campaign-batch
-description: Run one day of the launch email campaign - report where sending left off, send the next batch, monitor it, then report bounces, complaints, opt-outs, new signups and new trips. Use when the user asks where the campaign stands, to send or start the next batch or day, or how the last batch did.
+description: Run one batch of the launch email campaign - report where sending left off, send the next batch, monitor it, then report bounces, complaints, opt-outs, new signups and new trips. Use when the user asks where the campaign stands, to send or start the next batch or day, or how the last batch did.
 ---
 
-# Launch email campaign: one day's cycle
+# Launch email campaign: one batch's cycle
 
 All state lives in the production database (`email_campaign_recipients`) and in Resend, so nothing here depends on an earlier chat. Everything goes through `scripts/send-campaign.mjs`, run from the repo root.
 
@@ -13,27 +13,27 @@ All state lives in the production database (`email_campaign_recipients`) and in 
 node scripts/send-campaign.mjs report
 ```
 
-Prints one line per send day, the pending count, and opt-outs / new users / new trips since the newest batch started. Then check the previous batch's delivery (slow, about 4 emails a second):
+Prints one line per batch (a run of sends with no gap over 30 minutes), the pending count, and opt-outs / new users / new trips since the newest batch started. Then check the previous batch's delivery (slow, about 4 emails a second):
 
 ```
 node scripts/send-campaign.mjs results --last <size of that batch>
 ```
 
-Tell the user: which day is next, how the previous day did, and the batch you propose.
+Tell the user: which batch is next, how the previous one did, and the batch you propose.
 
 ## 2. The schedule
 
-| Day | Emails | Interval |
-|---|---|---|
-| 1 | 100 | 20s |
-| 2 | 500 | 10s |
-| 3 | 1,200 | 10s |
-| 4 | 2,000 | 5s |
-| 5 | everything still pending | 5s |
+| Batch | Emails | Interval | Takes about |
+|---|---|---|---|
+| 1 | 100 | 20s | 35 min |
+| 2 | 500 | 10s | 1.5 h |
+| 3 | 1,200 | 10s | 3.5 h |
+| 4 | 2,000 | 5s | 3 h |
+| 5 | everything still pending | 5s | 3.5 h |
 
-The next day is the number of send days in `report` plus one; skipped calendar days don't matter. If today already has a partial batch (interrupted send), finish it: limit = the day's size minus what was sent today.
+The next batch is the number of batches in `report` plus one. The plan was one a day, but the user may run more than one in a day. If the newest batch is smaller than its row here (interrupted send), finish it first: limit = that row's size minus what it sent.
 
-Only move up a step if the previous day was clean: no spam complaints, bounces under 4%, no failed sends. Otherwise repeat the previous day's size and say why.
+Only move up a step if the previous batch was clean: no spam complaints, bounces under 4%, no failed sends. Otherwise repeat the previous size and say why.
 
 ## 3. Send
 
@@ -53,7 +53,7 @@ About every 5 minutes until the send exits:
 
 ```
 node scripts/send-campaign.mjs status
-node scripts/send-campaign.mjs results --last <number sent so far today>
+node scripts/send-campaign.mjs results --last <number sent so far in this batch>
 ```
 
 A Monitor expires after 30 minutes; re-arm it for longer batches.
@@ -61,7 +61,7 @@ A Monitor expires after 30 minutes; re-arm it for longer batches.
 Stop the send immediately, and tell the user, on any of:
 
 - a spam complaint (`complained`) - Resend's limit is 0.08%, so one is already too many at these sizes
-- bounces over 4% of today's batch
+- bounces over 4% of this batch
 - failing sends (the script itself stops after 3 in a row)
 
 ## 5. After the batch

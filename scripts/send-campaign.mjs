@@ -14,7 +14,7 @@
 //                                                      email: delivered / bounced / complained
 //                                                      (--last <n> checks only the newest n)
 //   node scripts/send-campaign.mjs report              where the campaign stands: sends per
-//                                                      day, then opt-outs, new users and new
+//                                                      batch, then opt-outs, new users and new
 //                                                      trips since the newest batch started
 //                                                      (--since <iso time> to pick the start)
 //
@@ -433,25 +433,26 @@ async function report() {
     if (data.length < 1000) break;
   }
 
-  // One batch per calendar day (this machine's time zone).
-  const days = new Map();
-  for (const { sent_at } of rows) {
-    if (!sent_at) continue;
-    const day = new Date(sent_at).toLocaleDateString("en-CA");
-    const d = days.get(day) ?? { n: 0, first: sent_at, last: sent_at };
-    d.n++;
-    if (new Date(sent_at) < new Date(d.first)) d.first = sent_at;
-    if (new Date(sent_at) > new Date(d.last)) d.last = sent_at;
-    days.set(day, d);
+  // A batch is a run of sends with no gap over 30 minutes, so two batches on
+  // the same day count separately and a briefly interrupted send counts once.
+  const times = rows.filter((r) => r.sent_at).map((r) => new Date(r.sent_at)).sort((x, y) => x - y);
+  const batches = [];
+  for (const t of times) {
+    const b = batches.at(-1);
+    if (b && t - b.last <= 30 * 60 * 1000) {
+      b.n++;
+      b.last = t;
+    } else batches.push({ n: 1, first: t, last: t });
   }
-  const ordered = [...days].sort((a, b) => a[0].localeCompare(b[0]));
-  const time = (t) => new Date(t).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-  for (const [i, [day, d]] of ordered.entries()) {
-    console.log(`day ${i + 1}  ${day}  ${String(d.n).padStart(5)} sent  (${time(d.first)} -> ${time(d.last)})`);
+  const time = (t) => t.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  for (const [i, b] of batches.entries()) {
+    console.log(
+      `batch ${i + 1}  ${b.first.toLocaleDateString("en-CA")}  ${String(b.n).padStart(5)} sent  (${time(b.first)} -> ${time(b.last)})`,
+    );
   }
   await status();
 
-  const since = flag("--since") ?? ordered.at(-1)?.[1].first;
+  const since = flag("--since") ?? batches.at(-1)?.first.toISOString();
   if (!since) {
     console.log("Nothing sent yet.");
     return;

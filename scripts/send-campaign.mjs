@@ -13,6 +13,10 @@
 //   node scripts/send-campaign.mjs results             what Resend says happened to each sent
 //                                                      email: delivered / bounced / complained
 //                                                      (--last <n> checks only the newest n)
+//   node scripts/send-campaign.mjs report              where the campaign stands: sends per
+//                                                      day, then opt-outs, new users and new
+//                                                      trips since the newest batch started
+//                                                      (--since <iso time> to pick the start)
 //
 // send options:
 //   --dry-run        print who would be emailed, send nothing
@@ -412,12 +416,83 @@ async function results() {
   }
 }
 
-const command = args.find((a) => ["import", "status", "send", "results"].includes(a));
+// The quick half of a post-batch check (results is the slow half): reads only
+// our own database, so it is safe to run while a send is going.
+async function report() {
+  // Paged: a single select stops at the API's 1000-row cap.
+  const rows = [];
+  for (;;) {
+    const { data, error } = await supabase
+      .from(TABLE)
+      .select("sent_at, unsubscribed_at")
+      .or("sent_at.not.is.null,unsubscribed_at.not.is.null")
+      .order("position")
+      .range(rows.length, rows.length + 999);
+    if (error) throw error;
+    rows.push(...data);
+    if (data.length < 1000) break;
+  }
+
+  // One batch per calendar day (this machine's time zone).
+  const days = new Map();
+  for (const { sent_at } of rows) {
+    if (!sent_at) continue;
+    const day = new Date(sent_at).toLocaleDateString("en-CA");
+    const d = days.get(day) ?? { n: 0, first: sent_at, last: sent_at };
+    d.n++;
+    if (new Date(sent_at) < new Date(d.first)) d.first = sent_at;
+    if (new Date(sent_at) > new Date(d.last)) d.last = sent_at;
+    days.set(day, d);
+  }
+  const ordered = [...days].sort((a, b) => a[0].localeCompare(b[0]));
+  const time = (t) => new Date(t).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  for (const [i, [day, d]] of ordered.entries()) {
+    console.log(`day ${i + 1}  ${day}  ${String(d.n).padStart(5)} sent  (${time(d.first)} -> ${time(d.last)})`);
+  }
+  await status();
+
+  const since = flag("--since") ?? ordered.at(-1)?.[1].first;
+  if (!since) {
+    console.log("Nothing sent yet.");
+    return;
+  }
+  const start = new Date(since);
+  if (Number.isNaN(start.getTime())) {
+    console.error("--since needs a time like 2026-10-09T16:46:30Z");
+    process.exit(1);
+  }
+
+  const users = [];
+  for (let page = 1; ; page++) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) throw error;
+    users.push(...data.users);
+    if (data.users.length < 1000) break;
+  }
+  const trips = async (filter) => {
+    const { count: n, error } = await filter(
+      supabase.from("trips").select("*", { count: "exact", head: true }),
+    );
+    if (error || n === null) throw error ?? new Error("Could not count trips");
+    return n;
+  };
+
+  console.log(`since ${start.toISOString()}:`);
+  console.log(`  opt-outs   ${rows.filter((r) => r.unsubscribed_at && new Date(r.unsubscribed_at) >= start).length}`);
+  console.log(`  new users  ${users.filter((u) => new Date(u.created_at) >= start).length}  (${users.length} total)`);
+  console.log(`  new trips  ${await trips((q) => q.gte("created_at", start.toISOString()))}  (${await trips((q) => q)} total)`);
+
+  const site = await fetch(SITE_URL).then((r) => r.status, (err) => `unreachable (${err.message})`);
+  console.log(`site ${SITE_URL} -> ${site}`);
+}
+
+const command = args.find((a) => ["import", "status", "send", "results", "report"].includes(a));
 if (command === "import") await importList(args[args.indexOf("import") + 1]);
 else if (command === "status") await status();
 else if (command === "send") await send();
 else if (command === "results") await results();
+else if (command === "report") await report();
 else {
-  console.error("usage: node scripts/send-campaign.mjs [--local] <import <csv> | status | send --limit <n> | results>");
+  console.error("usage: node scripts/send-campaign.mjs [--local] <import <csv> | status | send --limit <n> | results | report>");
   process.exit(1);
 }

@@ -12,15 +12,17 @@
   @media (max-width: 600px) {
     .shell { padding: 20px 12px !important; }
     .pad { padding-left: 22px !important; padding-right: 22px !important; }
-    .headline { font-size: 25px !important; max-width: 62% !important; }
-    .hero { padding-bottom: 70px !important; }
-    .trip-time { font-size: 16px !important; }
+    .headline { font-size: 22px !important; max-width: 86% !important; }
+    .hero { padding-bottom: 64px !important; }
+    .math-num { font-size: 22px !important; }
+    .math-big { font-size: 30px !important; }
+    .math-op { font-size: 18px !important; padding: 0 8px !important; }
   }
 </style>
 </head>
 <body style="margin:0; padding:0; background-color:#f1f3ee; -webkit-text-size-adjust:100%;">
 <div style="display:none; max-height:0; overflow:hidden; opacity:0; color:transparent;">
-  Find others at ND to split a ride with to or from the airport. Join a trip or post your own.
+  A $140 airport ride split four ways is about $35 each. Free for ND students.
 </div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f1f3ee;">
 <tr>
@@ -32,122 +34,76 @@
          the fallback when a mail client blocks images, so the white text
          stays readable either way. -->
     <tr>
-      <td class="pad hero" background="https://downtosplit.app/email/hero.jpg" bgcolor="#3f6b52" style="background-color:#3f6b52; background-image:url('https://downtosplit.app/email/hero.jpg'); background-size:cover; background-position:right bottom; background-repeat:no-repeat; padding:24px 36px 92px 36px;">
-        <p style="margin:0 0 30px 0; font-family:'Space Grotesk','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:16px; font-weight:700; color:#fafaf8; letter-spacing:0.01em;">Down to Split</p>
+      <td class="pad hero" background="https://downtosplit.app/email/hero.jpg" bgcolor="#3f6b52" style="background-color:#3f6b52; background-image:url('https://downtosplit.app/email/hero.jpg'); background-size:cover; background-position:right bottom; background-repeat:no-repeat; padding:24px 36px 84px 36px;">
+        <p style="margin:0 0 28px 0; font-family:'Space Grotesk','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:16px; font-weight:700; color:#fafaf8; letter-spacing:0.01em;">Down to Split</p>
         <p style="margin:0 0 10px 0; font-family:'Space Grotesk','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#e9cf9c;">
-          Heading to the airport for break?
+          Flying out for fall break?
         </p>
-        <h1 class="headline" style="margin:0; max-width:330px; font-family:'Space Grotesk','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:30px; line-height:1.2; font-weight:700; color:#fafaf8;">
-          Split your rideshare with others at ND.
+        <h1 class="headline" style="margin:0; max-width:340px; font-family:'Space Grotesk','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:31px; line-height:1.2; font-weight:700; color:#fafaf8;">
+          Split your airport ride.<br>Pay ~$35, not $140.
         </h1>
       </td>
     </tr>
 
-    <!-- Intro -->
+    <!-- The savings, as plain arithmetic -->
     <tr>
       <td class="pad" style="padding:28px 36px 0 36px;">
-        <p style="margin:0; font-family:'Public Sans','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:16px; line-height:1.55; color:#1c1f1d; font-weight:600;">
-          Hi {{FIRST_NAME}},
-        </p>
-        <p style="margin:12px 0 0 0; font-family:'Public Sans','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:16px; line-height:1.55; color:#4b504d;">
-          We're Down to Split, an ND student-built project that helps you find others at ND to split a ride with to or from the airport. You can join an existing trip on our trip board, or you can post your own.
+        <p style="margin:0; font-family:'Public Sans','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:16px; line-height:1.55; color:#4b504d;">
+          Hi {{FIRST_NAME}}, find other ND students heading to or from the airport around the same time as you, and share one ride.
         </p>
       </td>
     </tr>
-
-    <!-- Example trip card, styled after the app's trip board -->
     <tr>
-      <td class="pad" style="padding:22px 36px 0 36px;">
+      <td class="pad" style="padding:20px 36px 0 36px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; border:1px solid #e3e6e1; border-radius:12px;">
           <tr>
-            <td style="padding:18px 20px 0 20px;" colspan="2">
-              <span style="font-family:'Public Sans','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:12px; letter-spacing:0.02em; color:#8a8f8b;">Example trip &middot; To the airport</span>
-            </td>
-          </tr>
-          <tr>
-            <td class="trip-time" style="padding:4px 0 0 20px; font-family:'Space Grotesk','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:21px; font-weight:700; color:#1c1f1d;" valign="bottom">
-              Fri, Oct 16 @ 2:30 PM
-            </td>
-            <td align="right" style="padding:4px 20px 0 8px;" valign="bottom">
-              <span style="font-family:'Public Sans','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:12px; color:#8a8f8b;">Trip total $140</span><br>
-              <span style="font-family:'Space Grotesk','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:21px; font-weight:600; color:#5c8a6c;">~$35</span><span style="font-family:'Public Sans','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:14px; color:#6f7471;">/person</span>
-            </td>
-          </tr>
-          <tr>
-            <td colspan="2" style="padding:16px 20px 0 20px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <td align="center" style="padding:20px 12px 18px 12px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <!-- Numbers and operators share one row so they line up;
+                     labels sit in a second row underneath. -->
                 <tr>
-                  <td width="8" style="font-size:0; line-height:0;"><div style="width:6px; height:6px; border-radius:6px; background-color:#a4a8a5;"></div></td>
-                  <td style="padding:0 10px;"><div style="height:1px; background-color:#e3e6e1; font-size:0; line-height:0;">&nbsp;</div></td>
-                  <td align="center" style="white-space:nowrap; font-family:'Public Sans','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:15px; font-weight:600; color:#1c1f1d;">
-                    Main Circle <span style="color:#8a8f8b;">&rarr;</span> O'Hare T1
-                  </td>
-                  <td style="padding:0 10px;"><div style="height:1px; background-color:#e3e6e1; font-size:0; line-height:0;">&nbsp;</div></td>
-                  <td width="8" style="font-size:0; line-height:0;"><div style="width:6px; height:6px; border-radius:6px; background-color:#3f6b52;"></div></td>
+                  <td class="math-num" align="center" valign="middle" style="padding:0; font-family:'Space Grotesk','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:26px; line-height:40px; font-weight:700; color:#1c1f1d;">$140</td>
+                  <td class="math-op" align="center" valign="middle" style="padding:0 12px; font-family:'Space Grotesk','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:22px; line-height:40px; color:#a4a8a5;">&divide;</td>
+                  <td class="math-num" align="center" valign="middle" style="padding:0; font-family:'Space Grotesk','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:26px; line-height:40px; font-weight:700; color:#1c1f1d;">4</td>
+                  <td class="math-op" align="center" valign="middle" style="padding:0 12px; font-family:'Space Grotesk','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:22px; line-height:40px; color:#a4a8a5;">=</td>
+                  <td class="math-big" align="center" valign="middle" style="padding:0; font-family:'Space Grotesk','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:36px; line-height:40px; font-weight:700; color:#3f6b52;">~$35</td>
+                </tr>
+                <tr>
+                  <td align="center" style="padding:4px 0 0 0; font-family:'Public Sans','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:12px; color:#8a8f8b;">ride</td>
+                  <td></td>
+                  <td align="center" style="padding:4px 0 0 0; font-family:'Public Sans','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:12px; color:#8a8f8b;">people</td>
+                  <td></td>
+                  <td align="center" style="padding:4px 0 0 0; font-family:'Public Sans','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:12px; font-weight:600; color:#5c8a6c;">each</td>
                 </tr>
               </table>
             </td>
           </tr>
-          <tr>
-            <td style="padding:16px 0 18px 20px; font-family:'Space Grotesk','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:12px; font-weight:600; letter-spacing:0.02em; color:#b8935a;">
-              3 of 4 seats filled
-            </td>
-            <td align="right" style="padding:12px 20px 18px 8px;">
-              <span style="display:inline-block; background-color:#3f6b52; color:#fafaf8; font-family:'Space Grotesk','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:12px; font-weight:600; padding:7px 16px; border-radius:999px;">Join trip</span>
-            </td>
-          </tr>
         </table>
       </td>
     </tr>
 
-    <!-- How it works -->
+    <!-- What to do, then one button -->
     <tr>
-      <td class="pad" style="padding:28px 36px 0 36px;">
-        <p style="margin:0; font-family:'Public Sans','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:16px; line-height:1.55; color:#1c1f1d; font-weight:600;">
-          It's simple:
-        </p>
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-          <tr>
-            <td width="26" valign="top" style="padding:8px 0 0 0; font-family:'Space Grotesk','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:16px; line-height:1.55; font-weight:700; color:#3f6b52;">1.</td>
-            <td valign="top" style="padding:8px 0 0 0; font-family:'Public Sans','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:16px; line-height:1.55; color:#4b504d;">Post when you're taking a rideshare to the airport (or make a private trip and share the invite link!)</td>
-          </tr>
-          <tr>
-            <td width="26" valign="top" style="padding:8px 0 0 0; font-family:'Space Grotesk','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:16px; line-height:1.55; font-weight:700; color:#3f6b52;">2.</td>
-            <td valign="top" style="padding:8px 0 0 0; font-family:'Public Sans','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:16px; line-height:1.55; color:#4b504d;">Wait for people to join. You'll get each other's contact info to coordinate.</td>
-          </tr>
-          <tr>
-            <td width="26" valign="top" style="padding:8px 0 0 0; font-family:'Space Grotesk','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:16px; line-height:1.55; font-weight:700; color:#3f6b52;">3.</td>
-            <td valign="top" style="padding:8px 0 0 0; font-family:'Public Sans','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:16px; line-height:1.55; color:#4b504d;">Split your rideshare and the fare. A $140 trip comes to about $35 each with four people.</td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-
-    <!-- Call to action -->
-    <tr>
-      <td class="pad" style="padding:24px 36px 0 36px;">
+      <td class="pad" style="padding:22px 36px 0 36px;">
         <p style="margin:0; font-family:'Public Sans','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:16px; line-height:1.55; color:#4b504d;">
-          <strong style="color:#1c1f1d;">Try creating a trip!</strong> It's super easy, and you can check back anytime to see if anyone wants to join you.
+          <strong style="color:#1c1f1d;">It's free.</strong> Join a trip someone already posted, or post yours and let others join you.
         </p>
       </td>
     </tr>
     <tr>
-      <td class="pad" align="center" style="padding:20px 36px 0 36px;">
-        <a href="https://downtosplit.app" style="display:inline-block; background-color:#3f6b52; color:#fafaf8; text-decoration:none; font-family:'Space Grotesk','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:16px; font-weight:600; padding:14px 34px; border-radius:999px;">Create a trip &rarr;</a>
-        <p style="margin:22px 0 0 0; font-family:'Public Sans','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:13px; line-height:1.4; color:#8a8f8b;">
-          Free &middot; ND emails only &middot; sign in with your @nd.edu Google account
+      <td class="pad" align="center" style="padding:24px 36px 0 36px;">
+        <a href="https://downtosplit.app" style="display:inline-block; background-color:#3f6b52; color:#fafaf8; text-decoration:none; font-family:'Space Grotesk','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:16px; font-weight:600; padding:14px 34px; border-radius:999px;">See upcoming trips &rarr;</a>
+        <p style="margin:16px 0 0 0; font-family:'Public Sans','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:13px; line-height:1.5; color:#8a8f8b;">
+          No sign-in to look. Sign in with your ND Google account to join or post.
         </p>
       </td>
     </tr>
 
     <!-- Sign-off -->
     <tr>
-      <td class="pad" style="padding:28px 36px 34px 36px;">
+      <td class="pad" style="padding:28px 36px 30px 36px;">
         <div style="height:1px; background-color:#e3e6e1; font-size:0; line-height:0;">&nbsp;</div>
-        <p style="margin:22px 0 0 0; font-family:'Public Sans','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:15px; line-height:1.55; color:#4b504d;">
-          The more eyes on this, the more rides get split, so spread the word!
-        </p>
-        <p style="margin:10px 0 0 0; font-family:'Public Sans','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:15px; line-height:1.55; color:#1c1f1d; font-weight:600;">
+        <p style="margin:20px 0 0 0; font-family:'Public Sans','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:15px; line-height:1.55; color:#1c1f1d; font-weight:600;">
           The Down to Split team
         </p>
       </td>
@@ -158,7 +114,7 @@
   <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="width:100%; max-width:560px;">
     <tr>
       <td align="center" style="padding:22px 24px 0 24px; font-family:'Public Sans','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:13px; line-height:1.6; color:#6f7471;">
-        <strong style="color:#4b504d;">Why you're getting this:</strong> splitting a ride only works when enough people going the same way know about it, so we're letting the Notre Dame community know before break. If it's not for you, you can opt out here: <a href="{{UNSUBSCRIBE_URL}}" style="color:#4b504d; font-weight:600; text-decoration:underline;">Unsubscribe</a>
+        You're getting this because we're letting the Notre Dame community know before break. Not for you? <a href="{{UNSUBSCRIBE_URL}}" style="color:#4b504d; font-weight:600; text-decoration:underline;">Unsubscribe</a>
       </td>
     </tr>
     <tr>

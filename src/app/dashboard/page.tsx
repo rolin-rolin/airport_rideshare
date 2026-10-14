@@ -16,22 +16,37 @@ export default async function DashboardPage({
   searchParams: Promise<{ dir?: string }>;
 }) {
   const { dir } = await searchParams;
-  const direction: Direction = dir === "to_airport" ? "to_airport" : "from_airport";
 
-  // The other tab's trips are fetched only so its tab button can show a
-  // live "N active postings" count. Going through the same getBoardTrips
-  // the tab itself renders (the get_board_trips RPC, safe for anon) keeps
-  // that count equal to what the tab would list, and the realtime
-  // router.refresh() re-runs it like everything else -- signed in or out.
-  const otherDirection: Direction = direction === "to_airport" ? "from_airport" : "to_airport";
+  // Both tabs are fetched: the rendered tab's trips, and the other tab's
+  // only so its button can show a live "N active postings" count. Going
+  // through the same getBoardTrips each tab renders (the get_board_trips
+  // RPC, safe for anon) keeps every count equal to what that tab would
+  // list, and the realtime router.refresh() re-runs it like everything
+  // else -- signed in or out.
   const supabase = await createClient();
-  const [trips, otherTrips, myActiveTrip, { data: { user } }] = await Promise.all([
-    getBoardTrips(direction),
-    getBoardTrips(otherDirection),
+  const [fromTrips, toTrips, myActiveTrip, { data: { user } }] = await Promise.all([
+    getBoardTrips("from_airport"),
+    getBoardTrips("to_airport"),
     getMyActiveTrip(),
     supabase.auth.getUser(),
   ]);
-  const tabCounts = { [direction]: trips.length, [otherDirection]: otherTrips.length };
+  const tabCounts: Record<Direction, number> = {
+    from_airport: fromTrips.length,
+    to_airport: toTrips.length,
+  };
+
+  // An explicit ?dir (a tab click, a shared link, the post-sign-in return
+  // path) always wins. With none, open the tab with more active postings;
+  // a tie (including 0-0) keeps the From Airport default. TabNav is handed
+  // this same value rather than re-reading the URL, so the highlighted tab,
+  // the listed trips and the filters always agree.
+  const direction: Direction =
+    dir === "to_airport" || dir === "from_airport"
+      ? dir
+      : tabCounts.to_airport > tabCounts.from_airport
+        ? "to_airport"
+        : "from_airport";
+  const trips = direction === "to_airport" ? toTrips : fromTrips;
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-6">
@@ -84,7 +99,7 @@ export default async function DashboardPage({
         money by joining a trip!
       </p>
 
-      <TabNav counts={tabCounts} />
+      <TabNav active={direction} counts={tabCounts} />
 
       <TripsBoard key={direction} trips={trips} direction={direction} myActiveTrip={myActiveTrip} />
     </div>

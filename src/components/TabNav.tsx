@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import type { Direction } from "@/lib/types";
@@ -9,13 +10,30 @@ const TABS: { direction: Direction; label: string }[] = [
   { direction: "to_airport", label: "To Airport" },
 ];
 
-// `counts` is how many trips each tab would list right now. The caller
-// derives it from the same board trip data each tab renders, so it stays in
-// step with every realtime-triggered refresh of the page. A tab whose count
-// is missing or 0 shows no status at all.
-export function TabNav({ counts }: { counts?: Partial<Record<Direction, number>> }) {
+// `active` is the tab the page actually rendered (DashboardPage resolves it
+// from ?dir, or from the counts when ?dir is absent), so the highlight can
+// never disagree with the listed trips. `counts` is how many trips each tab
+// would list right now. The caller derives it from the same board trip data
+// each tab renders, so it stays in step with every realtime-triggered
+// refresh of the page. A tab whose count is missing or 0 shows no status.
+export function TabNav({
+  active,
+  counts,
+}: {
+  active: Direction;
+  counts?: Partial<Record<Direction, number>>;
+}) {
   const searchParams = useSearchParams();
-  const active = searchParams.get("dir") === "to_airport" ? "to_airport" : "from_airport";
+  const hasDir = searchParams.has("dir");
+
+  // When the board was opened without ?dir, the page picked the busier tab.
+  // Write that choice into the URL (without a navigation) so later realtime
+  // refreshes re-render the same tab instead of re-picking it -- otherwise
+  // a count change could flip the tab, and reset its filters, mid-browse.
+  useEffect(() => {
+    if (hasDir) return;
+    window.history.replaceState(null, "", `${window.location.pathname}?dir=${active}`);
+  }, [hasDir, active]);
 
   return (
     <div className="flex gap-1 rounded-full border border-border bg-background p-1">

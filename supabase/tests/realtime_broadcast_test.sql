@@ -81,9 +81,12 @@ set local role anon;
 reset request.jwt.claims;
 set local realtime.topic = 'board-public';
 
+-- 0024 opened board-public to anon so the signed-out board stays live: the
+-- ping carries no row data and only fires for public trips, which anon can
+-- already read through get_board_trips.
 SELECT ok(
-  not exists(select 1 from realtime.messages),
-  'anon is not authorized for the board-public topic (policy is to authenticated only)'
+  exists(select 1 from realtime.messages),
+  'anon is authorized for the board-public topic (0024: signed-out board)'
 );
 
 reset role;

@@ -121,10 +121,10 @@ export default function PrivacyPage() {
       </Section>
 
       <Link
-        href="/login"
+        href="/dashboard"
         className="text-label font-display font-semibold text-primary underline underline-offset-2"
       >
-        Back to sign in
+        Back to the trip board
       </Link>
     </div>
   );

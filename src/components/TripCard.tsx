@@ -9,6 +9,7 @@ import { VehicleTypeInfoButton } from "@/components/VehicleTypeInfoButton";
 import { Tooltip } from "@/components/Tooltip";
 import { formatTripDate, formatTripTime } from "@/components/FormattedTripTime";
 import { nightOfPreviousDayLabel } from "@/lib/timezone";
+import { useSignInPrompt } from "@/components/SignInPrompt";
 
 const DIRECTION_LABEL: Record<Direction, string> = {
   to_airport: "Leaves campus",
@@ -40,6 +41,17 @@ export function TripCard({
   removing?: boolean;
 }) {
   const nightOfLabel = nightOfPreviousDayLabel(trip.departure_time, trip.timezone);
+  // Non-null only for signed-out viewers (see SignInPrompt): opening the
+  // trip or joining it then prompts sign-in, and returns here to this trip
+  // afterwards instead of navigating to a page that needs an account.
+  const signInPrompt = useSignInPrompt();
+  const tripHref = `/dashboard/trips/${trip.id}?bags=${luggage}`;
+  const promptToJoin = () =>
+    signInPrompt?.({
+      title: "Sign in to join this trip",
+      message: "Sign in with your nd.edu Google account to join and see how to reach your group.",
+      next: tripHref,
+    });
   return (
     <div
       className={`relative rounded-xl border border-border bg-background p-5 transition-colors hover:border-primary/40 ${
@@ -56,11 +68,20 @@ export function TripCard({
           detail page, without wrapping the join form in an anchor (nesting
           a form inside a link would hijack clicks on the bag input). The
           action area below sits above it via z-10. */}
-      <Link
-        href={`/dashboard/trips/${trip.id}?bags=${luggage}`}
-        className="absolute inset-0 rounded-xl"
-        aria-label={`View trip from ${trip.pickup_location} to ${trip.dropoff_location}`}
-      />
+      {signInPrompt ? (
+        <button
+          type="button"
+          onClick={promptToJoin}
+          className="absolute inset-0 cursor-pointer rounded-xl"
+          aria-label={`View trip from ${trip.pickup_location} to ${trip.dropoff_location}`}
+        />
+      ) : (
+        <Link
+          href={tripHref}
+          className="absolute inset-0 rounded-xl"
+          aria-label={`View trip from ${trip.pickup_location} to ${trip.dropoff_location}`}
+        />
+      )}
 
       <p className="text-label font-body text-foreground/50">
         {DIRECTION_LABEL[direction]}
@@ -125,9 +146,17 @@ export function TripCard({
               Won&apos;t fit
             </button>
           </Tooltip>
+        ) : canJoin && signInPrompt ? (
+          <button
+            type="button"
+            onClick={promptToJoin}
+            className="shrink-0 rounded-full bg-primary px-4 py-1.5 text-label font-display font-semibold text-background transition-colors hover:bg-primary/90"
+          >
+            Join
+          </button>
         ) : canJoin ? (
           <Link
-            href={`/dashboard/trips/${trip.id}?bags=${luggage}`}
+            href={tripHref}
             className="shrink-0 rounded-full bg-primary px-4 py-1.5 text-label font-display font-semibold text-background transition-colors hover:bg-primary/90"
           >
             Join

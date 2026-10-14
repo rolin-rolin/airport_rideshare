@@ -13,10 +13,17 @@ export default async function DashboardPage({
   const { dir } = await searchParams;
   const direction: Direction = dir === "to_airport" ? "to_airport" : "from_airport";
 
-  const [trips, myActiveTrip] = await Promise.all([
+  // The other tab's trips are fetched only so its tab button can show a
+  // live "N active postings" count. Going through the same getBoardTrips
+  // the tab itself renders keeps that count equal to what the tab would
+  // list, and the realtime router.refresh() re-runs it like everything else.
+  const otherDirection: Direction = direction === "to_airport" ? "from_airport" : "to_airport";
+  const [trips, otherTrips, myActiveTrip] = await Promise.all([
     getBoardTrips(direction),
+    getBoardTrips(otherDirection),
     getMyActiveTrip(),
   ]);
+  const tabCounts = { [direction]: trips.length, [otherDirection]: otherTrips.length };
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-6">
@@ -44,7 +51,14 @@ export default async function DashboardPage({
         </div>
       </div>
 
-      <TabNav />
+      {/* -mt-3 pulls this up under the heading (the column's gap-5 is meant
+          for spacing between sections, not a heading and its subline). */}
+      <p className="-mt-3 text-body font-body text-foreground/70">
+        Post your own trip, or browse the To Airport and From Airport tabs below. Save time and
+        money by joining a trip!
+      </p>
+
+      <TabNav counts={tabCounts} />
 
       <TripsBoard key={direction} trips={trips} direction={direction} myActiveTrip={myActiveTrip} />
     </div>

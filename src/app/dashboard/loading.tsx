@@ -24,6 +24,11 @@ export default function DashboardLoading() {
         </h1>
       </div>
 
+      <p className="-mt-3 text-body font-body text-foreground/70">
+        Post your own trip, or browse the To Airport and From Airport tabs below. Save time and
+        money by joining a trip!
+      </p>
+
       <div className="h-11 animate-pulse rounded-full border border-border bg-background" />
 
       <div className="flex flex-col gap-3">

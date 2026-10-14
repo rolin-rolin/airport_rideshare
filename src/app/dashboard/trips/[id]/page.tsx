@@ -13,6 +13,7 @@ import {
   FormattedTripTime,
 } from "@/components/FormattedTripTime";
 import { nightOfPreviousDayLabel } from "@/lib/timezone";
+import { SignInCard } from "@/components/SignInPanel";
 import {
   TripViewRealtimeFlash,
   FlashCard,
@@ -54,6 +55,19 @@ export default async function TripDetailPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Signed out (e.g. someone opening a shared trip link): get_trip_for_view
+  // requires a session, and the roster/contact details are for signed-in
+  // members anyway. Prompt sign-in and come straight back to this trip.
+  if (!user) {
+    return (
+      <SignInCard
+        title="Sign in to view this trip"
+        message="Sign in with your nd.edu Google account to see this trip and join it."
+        next={`/dashboard/trips/${id}${bags != null ? `?bags=${encodeURIComponent(bags)}` : ""}`}
+      />
+    );
+  }
 
   const [trip, myActiveTrip] = await Promise.all([
     // Resolves private trips too: holding the UUID is what entitles the

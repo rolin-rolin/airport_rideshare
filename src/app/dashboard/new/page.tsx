@@ -1,8 +1,25 @@
 import Link from "next/link";
 import { getMyActiveTrip, getVehicleTypes } from "@/lib/trips";
 import { TripForm } from "@/components/TripForm";
+import { SignInCard } from "@/components/SignInPanel";
+import { createClient } from "@/utils/supabase/server";
 
 export default async function NewTripPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return (
+      <SignInCard
+        title="Sign in to post a trip"
+        message="Sign in with your nd.edu Google account to post a trip."
+        next="/dashboard/new"
+      />
+    );
+  }
+
   const activeTrip = await getMyActiveTrip();
 
   return (

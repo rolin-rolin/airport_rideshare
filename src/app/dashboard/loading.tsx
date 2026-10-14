@@ -29,7 +29,9 @@ export default function DashboardLoading() {
         money by joining a trip!
       </p>
 
-      <div className="h-11 animate-pulse rounded-full border border-border bg-background" />
+      {/* Sized to TabNav with its "N active postings" line: stacked under
+          the label on phones (~66px), beside it from sm up (~47px). */}
+      <div className="h-[66px] animate-pulse rounded-full border border-border bg-background sm:h-[47px]" />
 
       <div className="flex flex-col gap-3">
         <TripCardSkeleton />

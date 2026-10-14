@@ -9,9 +9,32 @@ It's free. Join a trip someone already posted, or post yours and let others join
 See upcoming trips: https://downtosplit.app
 (No sign-in to look. Sign in with your ND Google account to join or post.)
 
+---
+
+A bit more about us: we're Down to Split, an ND student-built project. Browse the trip board and join an existing trip, or post your own.
+
+Example trip:
+
+  Fri @ 2:30 PM
+  Main Circle -> O'Hare T1
+  Trip total $140, about $35/person
+  3 of 4 seats filled
+
+It's simple:
+1. Post when you're taking a rideshare to the airport (or make a private trip and share the invite link!)
+2. Wait for people to join. You'll get each other's contact info to coordinate.
+3. Take one rideshare together and split the fare, so each person pays their share instead of the whole thing.
+
+Try creating a trip! It's super easy, and you can check back anytime to see if anyone wants to join you.
+
+Create a trip: https://downtosplit.app
+(Free. ND emails only. Posting uses your @nd.edu Google account.)
+
+The more eyes on this, the more rides get split, so spread the word!
+
 The Down to Split team
 
 --
-You're getting this because we're letting the Notre Dame community know before break. Not for you? Unsubscribe: {{UNSUBSCRIBE_URL}}
+Why you're getting this: splitting a ride only works when enough people going the same way know about it, so we're letting the Notre Dame community know before break. If it's not for you, you can opt out here: {{UNSUBSCRIBE_URL}}
 
 Student project - not affiliated with the University of Notre Dame

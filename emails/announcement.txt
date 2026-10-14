@@ -2,7 +2,7 @@ Flying out for fall break? Split your airport ride. Pay $35, not $140.
 
 Hi {{FIRST_NAME}}, find other ND students heading to or from the airport around the same time as you, and share one ride.
 
-  $140 ride / 4 people = about $35 each
+  $140 ride / 4 people = $35 each
 
 It's free. Join a trip someone already posted, or post yours and let others join you.
 
@@ -17,7 +17,7 @@ Example trip:
 
   Fri @ 2:30 PM
   Main Circle -> O'Hare T1
-  Trip total $140, about $35/person
+  Trip total $140, $35/person
   3 of 4 seats filled
 
 It's simple:

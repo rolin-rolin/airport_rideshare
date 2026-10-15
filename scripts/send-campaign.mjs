@@ -280,12 +280,29 @@ async function send() {
     text: readFileSync("emails/announcement.txt", "utf8"),
   };
 
-  let query = supabase.from(TABLE).select("email, first_name, token, unsubscribed_at");
-  query = previewTo
-    ? query.eq("email", previewTo)
-    : query.is("sent_at", null).is("unsubscribed_at", null).order("position").limit(limit);
-  const { data: rows, error } = await query;
-  if (error) throw error;
+  const columns = "email, first_name, token, unsubscribed_at";
+  let rows = [];
+  if (previewTo) {
+    const { data, error } = await supabase.from(TABLE).select(columns).eq("email", previewTo);
+    if (error) throw error;
+    rows = data;
+  } else {
+    // Paged: a single select stops at the API's 1000-row cap, which would
+    // silently shrink any larger batch to 1000.
+    while (rows.length < limit) {
+      const size = Math.min(1000, limit - rows.length);
+      const { data, error } = await supabase
+        .from(TABLE)
+        .select(columns)
+        .is("sent_at", null)
+        .is("unsubscribed_at", null)
+        .order("position")
+        .range(rows.length, rows.length + size - 1);
+      if (error) throw error;
+      rows.push(...data);
+      if (data.length < size) break;
+    }
+  }
   if (!rows.length) {
     console.log(previewTo ? `${previewTo} is not in the list (import it first).` : "Nothing pending.");
     return;
@@ -386,8 +403,13 @@ async function results() {
   for (const [i, row] of rows.entries()) {
     let event;
     for (let attempt = 0; ; attempt++) {
+      // A dropped connection (fetch throws) is retried like a rate limit: one
+      // timeout must not throw away a check that takes minutes on a big batch.
       const res = await fetch(`https://api.resend.com/emails/${row.resend_id}`, {
         headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+      }).catch((err) => {
+        if (attempt >= 5) throw err;
+        return { status: 429 };
       });
       // Rate limited (a send may be running alongside): back off and retry.
       if (res.status === 429 && attempt < 5) {

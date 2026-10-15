@@ -23,15 +23,15 @@ Tell the user: which batch is next, how the previous one did, and the batch you 
 
 ## 2. The schedule
 
-| Batch | Emails | Interval | Takes about |
-|---|---|---|---|
-| 1 | 100 | 20s | 35 min |
-| 2 | 500 | 10s | 1.5 h |
-| 3 | 1,200 | 10s | 3.5 h |
-| 4 | 2,000 | 5s | 3 h |
-| 5 | everything still pending | 5s | 3.5 h |
+| Step | Emails | Interval | Takes about | Total sent when done |
+|---|---|---|---|---|
+| 1 | 100 | 20s | 35 min | 100 |
+| 2 | 500 | 10s | 1.5 h | 600 |
+| 3 | 1,200 | 10s | 3.5 h | 1,800 |
+| 4 | 2,000 | 5s | 3 h | 3,800 |
+| 5 | everything still pending | 5s | 3.5 h | all |
 
-The next batch is the number of batches in `report` plus one. The plan was one a day, but the user may run more than one in a day. If the newest batch is smaller than its row here (interrupted send), finish it first: limit = that row's size minus what it sent.
+Pick the next step from the total sent in `report`, not from its batch count: a step that was interrupted and resumed more than 30 minutes later shows up there as two batches. If the total sits between two rows, finish the unfinished step first: limit = that row's total minus the total sent. The plan was one step a day, but the user may run more than one in a day.
 
 Only move up a step if the previous batch was clean: no spam complaints, bounces under 4%, no failed sends. Otherwise repeat the previous size and say why.
 

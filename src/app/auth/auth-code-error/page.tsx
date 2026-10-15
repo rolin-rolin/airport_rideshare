@@ -12,10 +12,10 @@ export default function AuthCodeErrorPage() {
           again with your @nd.edu account.
         </p>
         <Link
-          href="/login"
+          href="/dashboard"
           className="inline-block rounded-full bg-primary px-5 py-2 text-label font-display font-semibold text-background transition-colors hover:bg-primary/90"
         >
-          Back to sign in
+          Back to the trip board
         </Link>
       </div>
     </div>

@@ -51,54 +51,38 @@ export function withCounts(
   };
 }
 
+// One row of get_board_trips (migration 0024): public columns plus
+// aggregate seat/bag counts, with no contact info and no user ids.
+type BoardTripRow = Omit<Trip, "contact_method" | "contact_value" | "created_by"> & {
+  vehicle_type_name: string | null;
+  seats_filled: number;
+  bags_filled: number;
+};
+
 // The board for one tab (To Airport / From Airport). open/full trips are
 // always shown (a full trip stays visible, not hidden, per §4.3) —
 // abandoned/expired trips are cleaned off the board per DESIGN.md §4.4.
 //
-// Private trips are excluded here as well as by RLS (migration 0013): the
-// policy still lets a poster and its members read their own private trip,
-// and the board isn't where they should meet it.
+// Read through the get_board_trips RPC (migration 0024) for signed-in and
+// signed-out viewers alike: it's the only board read anon is allowed, and
+// it filters to public trips and returns counts instead of signup rows, so
+// no viewer's browser is sent contact info, created_by or rider ids for
+// trips it's only browsing.
 export async function getBoardTrips(direction: Direction): Promise<TripWithCounts[]> {
   const supabase = await createClient();
 
-  const { data: trips, error: tripsError } = await supabase
-    .from("trips")
-    .select(
-      "id, direction, departure_time, timezone, pickup_location, dropoff_location, vehicle_type_id, seat_capacity, bag_capacity, max_bags_per_person, estimated_total_cost, status, visibility, created_by, created_at, vehicle_types(name)",
-    )
-    .eq("direction", direction)
-    .eq("visibility", "public")
-    .in("status", ["open", "full"])
-    .order("departure_time", { ascending: true });
+  const { data, error } = await supabase.rpc("get_board_trips", { p_direction: direction });
+  if (error) throw error;
 
-  if (tripsError) throw tripsError;
-  if (trips.length === 0) return [];
-
-  const typedTrips = trips as unknown as (Trip & {
-    vehicle_types: { name: string } | null;
-  })[];
-
-  // No profiles embed: cards show counts, not names, and since 0013 emails
-  // resolve only for your own trip-mates anyway.
-  const { data: signups, error: signupsError } = await supabase
-    .from("signups")
-    .select("id, trip_id, user_id, bag_count, joined_at")
-    .in(
-      "trip_id",
-      typedTrips.map((t) => t.id),
-    )
-    .is("left_at", null);
-
-  if (signupsError) throw signupsError;
-
-  // The board never shows contact info (only a member/the poster is
-  // entitled to see it — see get_trip_for_view, migration 0016). The select
-  // above doesn't even fetch contact_method/contact_value (they're
-  // column-privilege-restricted per migration 0019), so they're filled in
-  // as null here to satisfy the Trip shape.
-  return typedTrips.map((trip) =>
-    withCounts({ ...trip, contact_method: null, contact_value: null }, signups as unknown as SignupRow[]),
-  );
+  // contact_*/created_by are filled with empty values to satisfy the Trip
+  // shape the board components share with the detail view -- the board
+  // never reads them (see get_trip_for_view for who may see contact info).
+  return (data as BoardTripRow[]).map((trip) => ({
+    ...trip,
+    contact_method: null,
+    contact_value: null,
+    created_by: "",
+  }));
 }
 
 // Exported for unit testing; not otherwise part of the public API surface.

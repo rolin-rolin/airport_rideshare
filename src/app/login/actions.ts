@@ -1,10 +1,23 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
+import { POST_AUTH_NEXT_COOKIE, safeNextPath } from "@/lib/post-auth-redirect";
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(formData: FormData) {
   const supabase = await createClient();
+
+  // Remembered across the Google round trip so /auth/callback can return
+  // the user to what they were doing (e.g. the trip they tried to join).
+  const cookieStore = await cookies();
+  cookieStore.set(POST_AUTH_NEXT_COOKIE, safeNextPath(formData.get("next")), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 10,
+  });
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",

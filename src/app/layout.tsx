@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Public_Sans } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { TooltipProvider } from "@/components/Tooltip";
 import "./globals.css";
 
@@ -32,6 +33,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col overflow-x-hidden">
         <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
+        <Analytics />
       </body>
     </html>
   );

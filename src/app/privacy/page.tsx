@@ -12,7 +12,7 @@ export default function PrivacyPage() {
           Privacy Policy
         </h1>
         <p className="mt-1 text-label font-body text-foreground/60">
-          Last updated August 2026
+          Last updated November 2026
         </p>
       </div>
 
@@ -43,6 +43,13 @@ export default function PrivacyPage() {
           <li>
             <strong>Signup records</strong>: which trips you&apos;ve joined
             or left, and how many bags you&apos;re bringing.
+          </li>
+          <li>
+            <strong>Which link brought you here</strong>: if you open the
+            site from a tagged link (like a flyer QR code), we note that tag
+            and a random ID stored in a cookie, so we can count how many
+            people a flyer reaches and how many of them sign up. We
+            don&apos;t record your IP address or device details.
           </li>
         </ul>
       </Section>

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Down to Split Slide</title>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --gold:#f4b942; --gold-soft:#fbe7b5; --deep:#24402f; --green:#3f6b52; --ink:#1c1f1d; --muted:#4b504d; --faint:#8a8f8b; --line:#e3e6e1; --paper:#fafaf8; --sand:#e9cf9c; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--paper); }
+  body { font-family: 'Public Sans', Arial, sans-serif; color: var(--ink); display: grid; grid-template-columns: 1fr 640px; }
+  .left {
+    position: relative; color: #fff; padding: 84px 110px 0;
+    background: linear-gradient(to bottom, #305543 0, #305543 509px, rgba(48,85,67,0) 575px), url('../../public/email/hero.jpg') center bottom / 100% auto no-repeat, #305543;
+  }
+  .eyebrow { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 26px; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+  .eyebrow .brand { color: #fff; letter-spacing: .06em; }
+  h1 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 92px; line-height: .98; letter-spacing: -.02em; margin-top: 32px; }
+  h1 em { font-style: normal; color: var(--gold); }
+  .sub b { color: #fff; }
+  .sub { font-size: 34px; line-height: 1.35; margin-top: 34px; max-width: 1000px; color: rgba(255,255,255,.9); }
+  .price { margin-top: 44px; display: inline-block; background: rgba(250,250,248,.96); color: var(--ink); border-radius: 22px; padding: 28px 38px; }
+  .price .big { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 72px; line-height: 1; color: var(--green); letter-spacing: -.02em; }
+  .price .big s { color: var(--faint); text-decoration-thickness: 5px; }
+  .price .math { font-size: 28px; font-weight: 600; margin-top: 12px; }
+
+  .right { background: var(--gold); color: var(--deep); padding: 96px 90px 0; display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .cta { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 48px; line-height: 1.1; }
+  .code { margin-top: 40px; background: #fff; border: 0; box-shadow: 0 12px 30px rgba(120,80,0,.25); border-radius: 22px; padding: 28px; }
+  .code img { width: 380px; height: 380px; display: block; }
+  .url { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 50px; color: var(--deep); margin-top: 30px; }
+  .free { font-size: 26px; line-height: 1.4; color: var(--deep); margin-top: 22px; max-width: 440px; }
+  .disc { white-space: nowrap; margin-top: auto; padding-bottom: 44px; font-size: 17px; color: rgba(36,64,47,.7); }
+</style>
+</head>
+<body>
+  <section class="left">
+    <div class="eyebrow"><span class="brand">Down to Split</span> · Thanksgiving &amp; winter break</div>
+    <h1><em>Save some money</em><br>on your trip home<br>this break.</h1>
+    <p class="sub"><b>Leave campus on your schedule</b>, not a bus or train timetable. Share an Uber or Lyft with ND students heading to O'Hare, Midway or South Bend.</p>
+    <div class="price">
+      <div class="big">Pay $35, not <s>$140</s></div>
+      <div class="math">$140 ride to O'Hare ÷ 4 = $35 each</div>
+    </div>
+  </section>
+  <section class="right">
+    <div class="cta">Scan to see<br>upcoming trips</div>
+    <div class="code"><img src="qr.svg" alt="QR code to downtosplit.app"></div>
+    <div class="url">downtosplit.app</div>
+    <p class="free">Free · No sign-in to browse.<br>Join or post with your @nd.edu Google account.</p>
+    <p class="disc">Student-built · not affiliated with the University of Notre Dame</p>
+  </section>
+</body>
+</html>

@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 import { POST_AUTH_NEXT_COOKIE, safeNextPath } from "@/lib/post-auth-redirect";
+import {
+  REFERRAL_REF_COOKIE,
+  REFERRAL_VISITOR_COOKIE,
+  parseRef,
+  parseVisitorId,
+} from "@/lib/referral";
 
 const ALLOWED_EMAIL_DOMAIN = process.env.ALLOWED_EMAIL_DOMAIN!;
 
@@ -32,6 +38,18 @@ export async function GET(request: Request) {
       const emailVerified = user?.user_metadata?.email_verified === true;
 
       if (domain === ALLOWED_EMAIL_DOMAIN && emailVerified) {
+        // Credit a new account to the tagged link (e.g. the HPC flyer) this
+        // browser arrived through. The database only counts it if the
+        // account is newer than that visit; never blocks the sign-in.
+        const ref = parseRef(cookieStore.get(REFERRAL_REF_COOKIE)?.value);
+        const visitorId = parseVisitorId(cookieStore.get(REFERRAL_VISITOR_COOKIE)?.value);
+        if (ref && visitorId) {
+          const { error: refError } = await supabase.rpc("claim_referral_signup", {
+            p_ref: ref,
+            p_visitor_id: visitorId,
+          });
+          if (refError) console.error("claim_referral_signup failed", refError.message);
+        }
         return NextResponse.redirect(`${origin}${next}`);
       }
 
